@@ -14,12 +14,20 @@ from ..models.schemas import Asset, DailyPrice
 class DataManager:
     """Manages historical price data fetching and storage"""
     
-    # Target assets for backtesting
+    # Target assets for backtesting - EXPANDED TO 7 ASSETS
     DEFAULT_ASSETS = {
         'VTI': {'name': 'Vanguard Total Stock Market ETF', 'asset_class': 'US_EQUITY'},
         'VTIAX': {'name': 'Vanguard Total International Stock Index Admiral', 'asset_class': 'INTL_EQUITY'},
-        'BND': {'name': 'Vanguard Total Bond Market ETF', 'asset_class': 'US_BONDS'}
+        'BND': {'name': 'Vanguard Total Bond Market ETF', 'asset_class': 'US_BONDS'},
+        'VNQ': {'name': 'Vanguard Real Estate ETF', 'asset_class': 'REIT'},
+        'GLD': {'name': 'SPDR Gold Shares', 'asset_class': 'COMMODITY'},
+        'VWO': {'name': 'Vanguard Emerging Markets ETF', 'asset_class': 'EMERGING_MARKETS'},
+        'QQQ': {'name': 'Invesco QQQ Trust', 'asset_class': 'LARGE_CAP_GROWTH'}
     }
+    
+    # Historical data period - EXTENDED TO 20 YEARS  
+    DEFAULT_START_DATE = '2004-01-01'  # Extended from 2015-01-01
+    DEFAULT_END_DATE = '2024-12-31'
     
     def __init__(self, db: Session = None):
         self.db = db or next(get_db())
@@ -40,19 +48,23 @@ class DataManager:
         self.db.commit()
         print(f"Assets ensured in database: {list(self.DEFAULT_ASSETS.keys())}")
     
-    def fetch_historical_data(self, symbol: str, start_date: str = "2015-01-01", 
-                             end_date: str = "2025-01-01") -> pd.DataFrame:
+    def fetch_historical_data(self, symbol: str, start_date: str = None, 
+                             end_date: str = None) -> pd.DataFrame:
         """
         Fetch historical data from Yahoo Finance
         
         Args:
             symbol: Stock symbol (e.g., 'VTI')
-            start_date: Start date in YYYY-MM-DD format
-            end_date: End date in YYYY-MM-DD format
+            start_date: Start date in YYYY-MM-DD format (defaults to DEFAULT_START_DATE)
+            end_date: End date in YYYY-MM-DD format (defaults to DEFAULT_END_DATE)
             
         Returns:
             DataFrame with historical price data
         """
+        # Use class defaults if not specified
+        start_date = start_date or self.DEFAULT_START_DATE
+        end_date = end_date or self.DEFAULT_END_DATE
+        
         try:
             ticker = yf.Ticker(symbol)
             
@@ -142,9 +154,13 @@ class DataManager:
             print(f"Error storing data for {symbol}: {e}")
             raise
     
-    def refresh_all_data(self) -> Dict[str, int]:
+    def refresh_all_data(self, start_date: str = None, end_date: str = None) -> Dict[str, int]:
         """
         Refresh historical data for all target assets
+        
+        Args:
+            start_date: Optional start date override (defaults to DEFAULT_START_DATE)
+            end_date: Optional end date override (defaults to DEFAULT_END_DATE)
         
         Returns:
             Dictionary mapping symbol to number of new records
@@ -152,10 +168,17 @@ class DataManager:
         self.ensure_assets_exist()
         results = {}
         
+        # Use default date range if not specified
+        start_date = start_date or self.DEFAULT_START_DATE
+        end_date = end_date or self.DEFAULT_END_DATE
+        
+        print(f"📅 Loading data from {start_date} to {end_date}")
+        print(f"🔢 Processing {len(self.DEFAULT_ASSETS)} assets: {list(self.DEFAULT_ASSETS.keys())}")
+        
         for symbol in self.DEFAULT_ASSETS.keys():
             try:
                 print(f"Refreshing data for {symbol}...")
-                price_data = self.fetch_historical_data(symbol)
+                price_data = self.fetch_historical_data(symbol, start_date, end_date)
                 records_stored = self.store_price_data(symbol, price_data)
                 results[symbol] = records_stored
                 
