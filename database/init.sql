@@ -1,8 +1,8 @@
 -- Database initialization script
 -- Creates tables and indexes for portfolio backtesting system
 
--- Enable TimescaleDB extension for time-series optimization
-CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
+-- Enable TimescaleDB extension for time-series optimization (optional)
+-- CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
 
 -- Create schema
 CREATE SCHEMA IF NOT EXISTS portfolio;
@@ -34,8 +34,8 @@ CREATE TABLE IF NOT EXISTS daily_prices (
     PRIMARY KEY (date, symbol)
 );
 
--- Convert to TimescaleDB hypertable for better performance
-SELECT create_hypertable('daily_prices', 'date', if_not_exists => TRUE);
+-- Convert to TimescaleDB hypertable for better performance (optional)
+-- SELECT create_hypertable('daily_prices', 'date', if_not_exists => TRUE);
 
 -- Portfolio snapshots table for caching
 CREATE TABLE IF NOT EXISTS portfolio_snapshots (

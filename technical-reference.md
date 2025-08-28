@@ -1,97 +1,57 @@
 # 🔧 TECHNICAL REFERENCE - Portfolio Backtesting PoC
 
 **📁 Project**: AI-powered portfolio optimization system  
-**🎯 Current Phase**: Phase 1 - Expanded Asset Universe (Weeks 1-3)  
-**⏱️ Status**: Core system operational, expanding to 7-asset universe  
-**📅 Updated**: Session 4 - Sprint "Market-Beating Diversification"
+**🎯 Current Sprint**: SPRINT 2 - "Market-Beating Diversification"  
+**⏱️ Status**: Sprint 2, Phase 1, Week 3 - Portfolio Engine Optimization  
+**📅 Updated**: Session 4 - Building on Sprint 1 foundation (3-asset + chatbot)
+
+## 🏗️ SYSTEM ARCHITECTURE (CURRENT)
 
 ## 🏗️ SYSTEM ARCHITECTURE (CURRENT)
 
 ### ✅ **Production Components:**
 ```
 Portfolio Backtesting System
-├── FastAPI Backend (src/api/)
-│   ├── /backtest - Portfolio performance analysis
-│   ├── /optimize - Efficient frontier calculations
-│   └── /assets - Asset data endpoints
-├── PostgreSQL Database (database/)
-│   ├── 7,548 price records (2015-2024)
-│   ├── 3 assets: VTI, VTIAX, BND
+├── FastAPI Backend (src/api/) - Port 8006
+│   ├── /api/backtest - Portfolio performance analysis
+│   ├── /api/optimize - Efficient frontier calculations
+│   └── /api/assets - Asset data endpoints
+├── Local PostgreSQL Database (localhost:5432)
+│   ├── 33,725 price records (2004-2024)
+│   ├── 7 assets: VTI, VTIAX, BND, VNQ, GLD, VWO, QQQ
 │   └── Normalized schema with proper indexing
 ├── Portfolio Engine (src/core/)
 │   ├── Modern Portfolio Theory implementation
 │   ├── Risk/return calculations
 │   └── Optimization algorithms
 └── Docker Deployment
-    ├── Multi-container setup
-    └── Production-ready configuration
+    ├── API container connects to host database
+    └── Production-ready configuration on port 8006
 ```
 
 ### 🚀 **Performance Benchmarks:**
-- **Backtesting Speed**: 0.36s for 10-year, 3-asset portfolio
+- **Backtesting Speed**: 0.40s for 10-year, 7-asset portfolio
 - **Optimization Speed**: 0.09s for max Sharpe, 0.10s for efficient frontier  
 - **API Response Time**: All endpoints <1s
 - **Data Quality**: 99.9% accuracy vs PortfolioVisualizer
+- **API Endpoints**: http://localhost:8006/docs
 
 ---
 
-## 📋 PHASE 1: EXPANDED ASSET UNIVERSE (WEEKS 1-3)
+## 📋 SPRINT 2, PHASE 1: EXPANDED ASSET UNIVERSE (WEEKS 1-3)
 
-### 🎯 **Week 1 Objectives: Database & Data Pipeline**
+### 🎯 **Week 1 Objectives: Database & Data Pipeline** ✅ COMPLETE
 
-#### **Database Schema Extension:**
-```sql
--- New assets to add
-INSERT INTO assets (symbol, name, asset_class, expense_ratio) VALUES
-('VNQ', 'Vanguard Real Estate ETF', 'REIT', 0.0012),
-('GLD', 'SPDR Gold Shares', 'Commodity', 0.0040),
-('VWO', 'Vanguard Emerging Markets ETF', 'Emerging Market Equity', 0.0010),
-('QQQ', 'Invesco QQQ Trust', 'Large Cap Growth', 0.0020);
+### 🎯 **Week 2 Objectives: API & Model Extensions** ✅ COMPLETE
 
--- Expected final state: 7 assets total
--- Target: 51,100+ price records (20 years × 7 assets × ~365 days)
-```
-
-#### **Data Pipeline Updates:**
-- **File**: `load_historical_data.py`
-- **Extension**: Add 4 new asset tickers
-- **Historical Period**: Extend to 20 years (2004-2024)
-- **Data Validation**: Ensure data completeness across all assets
-- **Performance Target**: Load 51,100+ records in <30s
-
-### 🎯 **Week 2 Objectives: API & Model Extensions**
-
-#### **Pydantic Model Updates:**
-```python
-# Current: 3-asset allocation model
-class PortfolioAllocation(BaseModel):
-    VTI: float = Field(ge=0, le=1)
-    VTIAX: float = Field(ge=0, le=1) 
-    BND: float = Field(ge=0, le=1)
-
-# Target: 7-asset allocation model
-class ExpandedPortfolioAllocation(BaseModel):
-    VTI: float = Field(ge=0, le=1)     # US Total Market
-    VTIAX: float = Field(ge=0, le=1)   # International
-    BND: float = Field(ge=0, le=1)     # Bonds
-    VNQ: float = Field(ge=0, le=1)     # REITs
-    GLD: float = Field(ge=0, le=1)     # Gold
-    VWO: float = Field(ge=0, le=1)     # Emerging Markets
-    QQQ: float = Field(ge=0, le=1)     # Technology/Growth
-```
-
-#### **API Endpoint Updates:**
-- **Backward Compatibility**: Maintain 3-asset endpoint support
-- **New Endpoints**: 7-asset backtesting and optimization
-- **Performance Target**: <2s for 7-asset optimization
-
-### 🎯 **Week 3 Objectives: Portfolio Engine Optimization**
+### 🎯 **Week 3 Objectives: Portfolio Engine Optimization** 🚧 CURRENT
 
 #### **Multi-Asset Portfolio Engine:**
 - **File**: `src/core/portfolio.py`
-- **Enhancement**: Support variable asset count (3-7 assets)
+- **Enhancement**: Support variable asset count (3-7 assets) with optimal performance
 - **Optimization**: Efficient frontier for 7-asset universe
 - **Validation**: Results accuracy vs benchmark tools
+- **Performance Target**: <2s for 7-asset optimization, <0.5s for backtesting
 
 ---
 

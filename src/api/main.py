@@ -12,7 +12,7 @@ import os
 
 from src.models.database import SessionLocal, engine, get_db
 from src.models import schemas
-from src.core.portfolio_engine import PortfolioEngine
+from src.core.portfolio_engine_optimized import OptimizedPortfolioEngine as PortfolioEngine
 from src.core.data_manager import DataManager
 from src.api.backtesting import router as backtesting_router
 from src.api.data_routes import router as data_router

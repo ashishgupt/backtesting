@@ -8,7 +8,7 @@ import time
 from typing import Dict, Any
 
 from src.models.database import get_db
-from src.core.portfolio_engine import PortfolioEngine
+from src.core.portfolio_engine_optimized import OptimizedPortfolioEngine as PortfolioEngine
 from src.api.models import (
     BacktestRequest, BacktestResponse, PerformanceMetrics, ErrorResponse,
     SevenAssetBacktestRequest, SevenAssetPortfolioAllocation

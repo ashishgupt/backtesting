@@ -94,7 +94,7 @@ class BacktestRequest(BaseModel):
     @validator('start_date', 'end_date')
     def validate_dates(cls, v):
         try:
-            datetime.strptime(v, '%Y-%m-%d')
+            datetime.datetime.strptime(v, '%Y-%m-%d')
         except ValueError:
             raise ValueError(f"Date must be in YYYY-MM-DD format, got: {v}")
         return v
@@ -118,7 +118,7 @@ class SevenAssetBacktestRequest(BaseModel):
     @validator('start_date', 'end_date')
     def validate_dates(cls, v):
         try:
-            datetime.strptime(v, '%Y-%m-%d')
+            datetime.datetime.strptime(v, '%Y-%m-%d')
         except ValueError:
             raise ValueError(f"Date must be in YYYY-MM-DD format, got: {v}")
         return v
