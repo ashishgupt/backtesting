@@ -7,7 +7,7 @@ import datetime
 from decimal import Decimal
 
 class PortfolioAllocation(BaseModel):
-    """Portfolio allocation model with validation"""
+    """Portfolio allocation model with validation for 3-asset and 7-asset portfolios"""
     allocation: Dict[str, float] = Field(
         ..., 
         description="Asset allocation weights (symbol -> weight)",
@@ -22,33 +22,105 @@ class PortfolioAllocation(BaseModel):
         # Check if weights sum to 1.0 (with small tolerance for floating point)
         total = sum(v.values())
         if abs(total - 1.0) > 0.0001:
-            raise ValueError(f"Allocation weights must sum to 1.0, got {total}")
+            raise ValueError(f"Allocation weights must sum to 1.0, got {total:.6f}")
             
         # Check for negative weights
         if any(weight < 0 for weight in v.values()):
             raise ValueError("Allocation weights cannot be negative")
             
-        # Check for valid asset symbols (basic validation)
-        valid_symbols = {'VTI', 'VTIAX', 'BND'}
-        invalid_symbols = set(v.keys()) - valid_symbols
+        # Validate asset symbols - support both 3-asset and 7-asset portfolios
+        valid_symbols = {
+            # Original 3-asset universe
+            'VTI', 'VTIAX', 'BND',
+            # Expanded 4 new assets  
+            'VNQ', 'GLD', 'VWO', 'QQQ'
+        }
+        
+        provided_symbols = set(v.keys())
+        invalid_symbols = provided_symbols - valid_symbols
+        
         if invalid_symbols:
-            raise ValueError(f"Invalid asset symbols: {invalid_symbols}")
+            raise ValueError(f"Invalid asset symbols: {invalid_symbols}. Valid symbols: {sorted(valid_symbols)}")
+        
+        # Allow 3-asset (legacy) or 7-asset allocations, but enforce minimum diversity
+        if len(provided_symbols) < 2:
+            raise ValueError("Portfolio must contain at least 2 assets for diversification")
             
         return v
 
+
+class SevenAssetPortfolioAllocation(BaseModel):
+    """Specialized 7-asset portfolio allocation with enhanced examples"""
+    allocation: Dict[str, float] = Field(
+        ...,
+        description="7-asset allocation weights with full diversification",
+        example={
+            "VTI": 0.40,    # US Total Market - 40%
+            "VTIAX": 0.20,  # International - 20%  
+            "BND": 0.15,    # Bonds - 15%
+            "VNQ": 0.10,    # REITs - 10%
+            "GLD": 0.05,    # Gold - 5%
+            "VWO": 0.05,    # Emerging Markets - 5%
+            "QQQ": 0.05     # Tech Growth - 5%
+        }
+    )
+    
+    @validator('allocation')
+    def validate_7_asset_allocation(cls, v):
+        # Reuse the same validation as PortfolioAllocation
+        return PortfolioAllocation.validate_allocation(v)
+        
+    def get_asset_breakdown(self) -> Dict[str, Dict[str, Any]]:
+        """Return detailed asset class breakdown"""
+        asset_info = {
+            'VTI': {'name': 'US Total Market', 'class': 'US_EQUITY', 'weight': self.allocation.get('VTI', 0)},
+            'VTIAX': {'name': 'International Developed', 'class': 'INTL_EQUITY', 'weight': self.allocation.get('VTIAX', 0)},
+            'BND': {'name': 'US Bonds', 'class': 'US_BONDS', 'weight': self.allocation.get('BND', 0)},
+            'VNQ': {'name': 'Real Estate', 'class': 'REIT', 'weight': self.allocation.get('VNQ', 0)},
+            'GLD': {'name': 'Gold', 'class': 'COMMODITY', 'weight': self.allocation.get('GLD', 0)},
+            'VWO': {'name': 'Emerging Markets', 'class': 'EMERGING_MARKETS', 'weight': self.allocation.get('VWO', 0)},
+            'QQQ': {'name': 'Technology Growth', 'class': 'LARGE_CAP_GROWTH', 'weight': self.allocation.get('QQQ', 0)}
+        }
+        return {k: v for k, v in asset_info.items() if v['weight'] > 0}
+
 class BacktestRequest(BaseModel):
-    """Backtest request parameters"""
+    """Backtest request parameters with support for 7-asset portfolios and 20-year history"""
     allocation: PortfolioAllocation
     initial_value: float = Field(10000.0, gt=0, description="Initial portfolio value in USD")
-    start_date: str = Field("2015-01-02", description="Backtest start date (YYYY-MM-DD)")
+    start_date: str = Field("2015-01-02", description="Backtest start date (YYYY-MM-DD). Can go back to 2004-01-01 for 20-year analysis")
     end_date: str = Field("2024-12-31", description="Backtest end date (YYYY-MM-DD)")
     rebalance_frequency: str = Field("monthly", description="Rebalancing frequency")
+    
+    @validator('start_date', 'end_date')
+    def validate_dates(cls, v):
+        try:
+            datetime.strptime(v, '%Y-%m-%d')
+        except ValueError:
+            raise ValueError(f"Date must be in YYYY-MM-DD format, got: {v}")
+        return v
     
     @validator('rebalance_frequency')
     def validate_rebalance_frequency(cls, v):
         valid_frequencies = ['daily', 'monthly', 'quarterly', 'annually']
         if v not in valid_frequencies:
             raise ValueError(f"Invalid rebalance frequency. Must be one of: {valid_frequencies}")
+        return v
+
+
+class SevenAssetBacktestRequest(BaseModel):
+    """Specialized backtest request for 7-asset portfolios with enhanced defaults"""
+    allocation: SevenAssetPortfolioAllocation
+    initial_value: float = Field(100000.0, gt=0, description="Initial portfolio value (default: $100k for 7-asset portfolios)")
+    start_date: str = Field("2004-01-01", description="Start date - 20 years for comprehensive analysis")
+    end_date: str = Field("2024-12-31", description="End date")
+    rebalance_frequency: str = Field("quarterly", description="Quarterly rebalancing for tax efficiency")
+    
+    @validator('start_date', 'end_date')
+    def validate_dates(cls, v):
+        try:
+            datetime.strptime(v, '%Y-%m-%d')
+        except ValueError:
+            raise ValueError(f"Date must be in YYYY-MM-DD format, got: {v}")
         return v
 
 class PerformanceMetrics(BaseModel):
