@@ -4,12 +4,25 @@ An AI-powered portfolio optimization system for sophisticated individual investo
 
 ## 🎯 Features
 
-- **Historical Backtesting**: 10-year backtesting engine (2015-2025) with dividend reinvestment
-- **Portfolio Optimization**: Modern Portfolio Theory implementation with efficient frontier
+### **Core Portfolio Analysis**
+- **Historical Backtesting**: 20-year backtesting engine (2004-2025) with dividend reinvestment
+- **7-Asset Universe**: VTI, VTIAX, BND, VNQ, GLD, VWO, QQQ with 33,725+ price records
+- **Portfolio Optimization**: Modern Portfolio Theory with efficient frontier calculations
 - **Performance Metrics**: CAGR, Sharpe ratio, max drawdown, volatility analysis
-- **REST API**: FastAPI-based backend with comprehensive endpoints
-- **Asset Universe**: VTI, VTIAX, BND (Vanguard ETFs)
-- **Database**: PostgreSQL with 7,548+ historical price records
+
+### **Advanced Analytics (NEW!)**
+- **Rolling Period Analysis**: Performance consistency across multiple time windows
+- **Crisis Period Stress Testing**: Portfolio resilience during 2008, 2020, 2022 crises  
+- **Recovery Time Analysis**: Drawdown patterns and recovery velocity tracking
+- **Timeline-Aware Risk**: Personalized recommendations based on investment horizon
+- **Rebalancing Strategy Analysis**: Cost-optimized rebalancing with tax considerations
+- **Extended Historical Analysis**: 20-year market regime detection and correlation evolution
+
+### **API & Infrastructure**
+- **REST API**: FastAPI-based backend with 10 comprehensive analysis endpoints
+- **Database**: PostgreSQL with 20-year historical data across 7 asset classes
+- **Performance**: Sub-second analysis operations (0.31s for 10-year backtests)
+- **AI Integration**: Natural language portfolio optimization and analysis
 
 ## 🚀 Quick Start
 
