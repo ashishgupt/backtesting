@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Analytics Dashboard - Claude Portfolio Advisor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .navigation {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .nav-item {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        .nav-item.active {
+            background: #4f46e5;
+            color: white;
+        }
+        
+        .nav-item:hover:not(.active) {
+            background: #f1f5f9;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .section {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+        
+        .card-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1a202c;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .grid {
+            display: grid;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+        
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+        
+        .grid-4 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+        
+        .metric-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+            border-left: 4px solid #4f46e5;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #4f46e5;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+        
+        .allocation-visual {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .allocation-item {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+        
+        .allocation-item:hover {
+            border-color: #4f46e5;
+            transform: translateY(-2px);
+        }
+        
+        .allocation-percentage {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .allocation-asset {
+            font-weight: 600;
+            color: #4f46e5;
+            margin-bottom: 0.25rem;
+        }
+        
+        .allocation-name {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 1rem 0;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            font-style: italic;
+            color: #64748b;
+        }
+        
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e2e8f0;
+            border-top: 2px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+        
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #fecaca;
+        }
+        
+        .success {
+            background: #f0fdf4;
+            color: #16a34a;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #bbf7d0;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        }
+        
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .input-group label {
+            font-weight: 500;
+            min-width: 120px;
+        }
+        
+        .input-group select {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+        }
+        
+        .regime-indicator {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .regime-bull { background: #dcfce7; color: #16a34a; }
+        .regime-bear { background: #fef2f2; color: #dc2626; }
+        .regime-crisis { background: #fef3c7; color: #d97706; }
+        .regime-recovery { background: #dbeafe; color: #2563eb; }
+        .regime-sideways { background: #f3f4f6; color: #6b7280; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>📊 Portfolio Analytics Dashboard</h1>
+        <p>Advanced AI-Powered Investment Analysis</p>
+    </header>
+    
+    <nav class="navigation">
+        <div class="nav-container">
+            <div class="nav-item active" onclick="showSection('overview')">🏠 Overview</div>
+            <div class="nav-item" onclick="showSection('historical')">📈 Historical Analysis</div>
+            <div class="nav-item" onclick="showSection('crisis')">⚡ Crisis Testing</div>
+            <div class="nav-item" onclick="showSection('rolling')">🔄 Rolling Analysis</div>
+            <div class="nav-item" onclick="showSection('rebalancing')">⚖️ Rebalancing</div>
+            <div class="nav-item" onclick="showSection('chatbot')">🤖 AI Advisor</div>
+        </div>
+    </nav>
+    
+    <main class="container">
+        <!-- Overview Section -->
+        <section id="overview" class="section active">
+            <div class="card">
+                <div class="card-header">
+                    <h2>🎯 Portfolio Configuration</h2>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <label>Portfolio Type:</label>
+                        <select id="portfolioType" onchange="updatePortfolio()">
+                            <option value="balanced">Balanced (60/30/10)</option>
+                            <option value="conservative">Conservative (30/30/40)</option>
+                            <option value="aggressive">Aggressive (80/20/0)</option>
+                            <option value="custom">Custom Allocation</option>
+                        </select>
+                        <button class="button" onclick="analyzePortfolio()">Analyze Portfolio</button>
+                    </div>
+                    
+                    <div id="allocationDisplay" class="allocation-visual">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-4">
+                <div class="metric-card">
+                    <div class="metric-value" id="cagrValue">-</div>
+                    <div class="metric-label">10-Year CAGR</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="sharpeValue">-</div>
+                    <div class="metric-label">Sharpe Ratio</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="drawdownValue">-</div>
+                    <div class="metric-label">Max Drawdown</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="volatilityValue">-</div>
+                    <div class="metric-label">Volatility</div>
+                </div>
+            </div>
+            
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📊 Performance Chart</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🥧 Asset Allocation</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="allocationChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>        
+        <!-- Historical Analysis Section -->
+        <section id="historical" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📈 Extended Historical Analysis</h2>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <label>Analysis Period:</label>
+                        <select id="historicalPeriod" onchange="updateHistoricalAnalysis()">
+                            <option value="20">20 Years (2004-2024)</option>
+                            <option value="10">10 Years (2015-2024)</option>
+                            <option value="5">5 Years (2020-2024)</option>
+                        </select>
+                        <button class="button" onclick="loadHistoricalAnalysis()">Load Analysis</button>
+                    </div>
+                    
+                    <div class="grid grid-3">
+                        <div class="metric-card">
+                            <div class="metric-value" id="historicalCAGR">-</div>
+                            <div class="metric-label">Historical CAGR</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="regimesDetected">-</div>
+                            <div class="metric-label">Market Regimes</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="diversificationScore">-</div>
+                            <div class="metric-label">Diversification Score</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🌊 Market Regimes Timeline</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="regimeChart"></canvas>
+                        </div>
+                        <div id="regimeLegend" class="mt-4">
+                            <span class="regime-indicator regime-bull">Bull Market</span>
+                            <span class="regime-indicator regime-bear">Bear Market</span>
+                            <span class="regime-indicator regime-crisis">Crisis</span>
+                            <span class="regime-indicator regime-recovery">Recovery</span>
+                            <span class="regime-indicator regime-sideways">Sideways</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📊 Correlation Evolution</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="correlationChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Crisis Testing Section -->
+        <section id="crisis" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h2>⚡ Crisis Period Stress Testing</h2>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <label>Crisis Period:</label>
+                        <select id="crisisPeriod" onchange="updateCrisisAnalysis()">
+                            <option value="all">All Crisis Periods</option>
+                            <option value="2008">2008 Financial Crisis</option>
+                            <option value="2020">2020 COVID Crash</option>
+                            <option value="2022">2022 Bear Market</option>
+                        </select>
+                        <button class="button" onclick="loadCrisisAnalysis()">Analyze Crisis</button>
+                    </div>
+                    
+                    <div class="grid grid-4">
+                        <div class="metric-card">
+                            <div class="metric-value" id="crisisReturn">-</div>
+                            <div class="metric-label">Crisis Return</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="recoveryDays">-</div>
+                            <div class="metric-label">Recovery Time</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="resilienceScore">-</div>
+                            <div class="metric-label">Resilience Score</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="maxDrawdownCrisis">-</div>
+                            <div class="metric-label">Max Drawdown</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📉 Drawdown Analysis</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="drawdownChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🔄 Recovery Patterns</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="recoveryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Rolling Analysis Section -->
+        <section id="rolling" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h2>🔄 Rolling Period Analysis</h2>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <label>Rolling Window:</label>
+                        <select id="rollingWindow" onchange="updateRollingAnalysis()">
+                            <option value="3">3 Years</option>
+                            <option value="5">5 Years</option>
+                            <option value="10">10 Years</option>
+                        </select>
+                        <button class="button" onclick="loadRollingAnalysis()">Analyze Rolling Periods</button>
+                    </div>
+                    
+                    <div class="grid grid-4">
+                        <div class="metric-card">
+                            <div class="metric-value" id="rollingAvgCAGR">-</div>
+                            <div class="metric-label">Avg Rolling CAGR</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="consistencyScore">-</div>
+                            <div class="metric-label">Consistency Score</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="bestPeriod">-</div>
+                            <div class="metric-label">Best Period CAGR</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="worstPeriod">-</div>
+                            <div class="metric-label">Worst Period CAGR</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2>📊 Rolling Returns Distribution</h2>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="rollingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Rebalancing Section -->
+        <section id="rebalancing" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h2>⚖️ Rebalancing Strategy Analysis</h2>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <label>Account Type:</label>
+                        <select id="accountType" onchange="updateRebalancingAnalysis()">
+                            <option value="taxable">Taxable Account</option>
+                            <option value="tax_deferred">401k/IRA (Tax-Deferred)</option>
+                            <option value="tax_free">Roth IRA (Tax-Free)</option>
+                        </select>
+                        <button class="button" onclick="loadRebalancingAnalysis()">Analyze Strategies</button>
+                    </div>
+                    
+                    <div class="grid grid-4">
+                        <div class="metric-card">
+                            <div class="metric-value" id="bestStrategy">-</div>
+                            <div class="metric-label">Best Strategy</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="costSavings">-</div>
+                            <div class="metric-label">Annual Cost Savings</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="rebalanceFreq">-</div>
+                            <div class="metric-label">Optimal Frequency</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="thresholdOptimal">-</div>
+                            <div class="metric-label">Optimal Threshold</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2>💰 Strategy Comparison</h2>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="rebalancingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Chatbot Section -->
+        <section id="chatbot" class="section">
+            <div class="card" style="height: 600px; display: flex; flex-direction: column;">
+                <div class="card-header">
+                    <h2>🤖 AI Portfolio Advisor</h2>
+                </div>
+                <div class="card-body" style="flex: 1; display: flex; flex-direction: column;">
+                    <div id="chatMessages" style="flex: 1; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background: #f8fafc;">
+                        <div class="message-assistant">
+                            <strong>Claude:</strong> Hello! I can help you analyze portfolios, understand risk, and optimize your investment strategy. Try asking about specific allocations, crisis performance, or rebalancing strategies.
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <input type="text" id="chatInput" placeholder="Ask about portfolio optimization, risk analysis, or market insights..." 
+                               style="flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;" 
+                               onkeypress="if(event.key==='Enter') sendChatMessage()">
+                        <button class="button" onclick="sendChatMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8006';
+        
+        // Portfolio configurations
+        const portfolioConfigs = {
+            balanced: { VTI: 0.6, VTIAX: 0.3, BND: 0.1 },
+            conservative: { VTI: 0.3, VTIAX: 0.3, BND: 0.4 },
+            aggressive: { VTI: 0.8, VTIAX: 0.2, BND: 0.0 }
+        };
+        
+        const assetNames = {
+            'VTI': 'US Total Stock Market',
+            'VTIAX': 'International Stocks',
+            'BND': 'US Total Bond Market',
+            'VNQ': 'Real Estate (REITs)',
+            'GLD': 'Gold',
+            'VWO': 'Emerging Markets',
+            'QQQ': 'Technology (NASDAQ)'
+        };
+        
+        // Current portfolio data
+        let currentPortfolio = portfolioConfigs.balanced;
+        let currentAnalysisData = null;
+        
+        // Chart instances
+        let performanceChart, allocationChart, regimeChart, correlationChart;
+        let drawdownChart, recoveryChart, rollingChart, rebalancingChart;
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePortfolio();
+            analyzePortfolio();
+        });
+        
+        // Navigation functions
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionName).classList.add('active');
+            
+            // Add active class to clicked nav item
+            event.target.classList.add('active');
+            
+            // Load section-specific data if needed
+            switch(sectionName) {
+                case 'historical':
+                    if (!document.querySelector('#historicalCAGR').textContent || document.querySelector('#historicalCAGR').textContent === '-') {
+                        loadHistoricalAnalysis();
+                    }
+                    break;
+                case 'crisis':
+                    if (!document.querySelector('#crisisReturn').textContent || document.querySelector('#crisisReturn').textContent === '-') {
+                        loadCrisisAnalysis();
+                    }
+                    break;
+                case 'rolling':
+                    if (!document.querySelector('#rollingAvgCAGR').textContent || document.querySelector('#rollingAvgCAGR').textContent === '-') {
+                        loadRollingAnalysis();
+                    }
+                    break;
+                case 'rebalancing':
+                    if (!document.querySelector('#bestStrategy').textContent || document.querySelector('#bestStrategy').textContent === '-') {
+                        loadRebalancingAnalysis();
+                    }
+                    break;
+            }
+        }        
+        // Portfolio management functions
+        function updatePortfolio() {
+            const portfolioType = document.getElementById('portfolioType').value;
+            if (portfolioType !== 'custom') {
+                currentPortfolio = portfolioConfigs[portfolioType];
+                displayAllocation();
+            }
+        }
+        
+        function displayAllocation() {
+            const container = document.getElementById('allocationDisplay');
+            let html = '';
+            
+            Object.entries(currentPortfolio).forEach(([asset, weight]) => {
+                if (weight > 0.001) {
+                    html += `
+                        <div class="allocation-item">
+                            <div class="allocation-percentage">${(weight * 100).toFixed(1)}%</div>
+                            <div class="allocation-asset">${asset}</div>
+                            <div class="allocation-name">${assetNames[asset]}</div>
+                        </div>
+                    `;
+                }
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Main portfolio analysis
+        async function analyzePortfolio() {
+            showLoading('overview');
+            
+            try {
+                // Get basic backtest data
+                const backtestResponse = await fetch(`${API_BASE}/api/backtest/portfolio`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        allocation: currentPortfolio,
+                        start_date: '2015-01-01',
+                        end_date: '2024-12-31'
+                    })
+                });
+                
+                if (!backtestResponse.ok) throw new Error('Failed to analyze portfolio');
+                
+                const data = await backtestResponse.json();
+                currentAnalysisData = data;
+                
+                // Update metrics
+                updateOverviewMetrics(data);
+                
+                // Create charts
+                createPerformanceChart(data);
+                createAllocationChart();
+                
+            } catch (error) {
+                console.error('Analysis error:', error);
+                showError('overview', `Analysis failed: ${error.message}`);
+            }
+        }
+        
+        function updateOverviewMetrics(data) {
+            document.getElementById('cagrValue').textContent = `${(data.metrics.cagr * 100).toFixed(1)}%`;
+            document.getElementById('sharpeValue').textContent = data.metrics.sharpe_ratio.toFixed(2);
+            document.getElementById('drawdownValue').textContent = `${(data.metrics.max_drawdown * 100).toFixed(1)}%`;
+            document.getElementById('volatilityValue').textContent = `${(data.metrics.volatility * 100).toFixed(1)}%`;
+        }
+        
+        // Historical analysis functions
+        async function loadHistoricalAnalysis() {
+            showLoading('historical');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/analyze/extended-historical`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        allocation: currentPortfolio,
+                        analysis_period: parseInt(document.getElementById('historicalPeriod').value)
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to load historical analysis');
+                
+                const data = await response.json();
+                
+                // Update metrics
+                document.getElementById('historicalCAGR').textContent = `${(data.overall_performance.cagr * 100).toFixed(1)}%`;
+                document.getElementById('regimesDetected').textContent = data.regimes.length;
+                document.getElementById('diversificationScore').textContent = `${(data.diversification_effectiveness * 100).toFixed(0)}%`;
+                
+                // Create regime chart
+                createRegimeChart(data.regimes);
+                createCorrelationChart(data.correlation_evolution);
+                
+            } catch (error) {
+                console.error('Historical analysis error:', error);
+                showError('historical', `Historical analysis failed: ${error.message}`);
+            }
+        }
+        
+        // Crisis analysis functions
+        async function loadCrisisAnalysis() {
+            showLoading('crisis');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/analyze/stress-test`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        allocation: currentPortfolio,
+                        crisis_periods: ['2008-financial-crisis', '2020-covid-crash', '2022-bear-market']
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to load crisis analysis');
+                
+                const data = await response.json();
+                
+                // Update metrics (using average across all crisis periods)
+                const avgReturn = data.crisis_analysis.reduce((sum, c) => sum + c.crisis_return, 0) / data.crisis_analysis.length;
+                const avgRecovery = data.crisis_analysis.reduce((sum, c) => sum + c.recovery_days, 0) / data.crisis_analysis.length;
+                const avgDrawdown = data.crisis_analysis.reduce((sum, c) => sum + c.max_drawdown, 0) / data.crisis_analysis.length;
+                
+                document.getElementById('crisisReturn').textContent = `${(avgReturn * 100).toFixed(1)}%`;
+                document.getElementById('recoveryDays').textContent = `${Math.round(avgRecovery)} days`;
+                document.getElementById('resilienceScore').textContent = `${data.resilience_score}/100`;
+                document.getElementById('maxDrawdownCrisis').textContent = `${(avgDrawdown * 100).toFixed(1)}%`;
+                
+                // Create crisis charts
+                createDrawdownChart(data);
+                createRecoveryChart(data);
+                
+            } catch (error) {
+                console.error('Crisis analysis error:', error);
+                showError('crisis', `Crisis analysis failed: ${error.message}`);
+            }
+        }
+        
+        // Rolling analysis functions
+        async function loadRollingAnalysis() {
+            showLoading('rolling');
+            
+            try {
+                const windowYears = parseInt(document.getElementById('rollingWindow').value);
+                const response = await fetch(`${API_BASE}/api/analyze/rolling-periods`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        allocation: currentPortfolio,
+                        window_years: windowYears
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to load rolling analysis');
+                
+                const data = await response.json();
+                
+                // Update metrics
+                document.getElementById('rollingAvgCAGR').textContent = `${(data.statistics.average_cagr * 100).toFixed(1)}%`;
+                document.getElementById('consistencyScore').textContent = data.statistics.consistency_score.toFixed(3);
+                document.getElementById('bestPeriod').textContent = `${(data.statistics.best_period_cagr * 100).toFixed(1)}%`;
+                document.getElementById('worstPeriod').textContent = `${(data.statistics.worst_period_cagr * 100).toFixed(1)}%`;
+                
+                // Create rolling returns chart
+                createRollingChart(data);
+                
+            } catch (error) {
+                console.error('Rolling analysis error:', error);
+                showError('rolling', `Rolling analysis failed: ${error.message}`);
+            }
+        }
+        
+        // Rebalancing analysis functions
+        async function loadRebalancingAnalysis() {
+            showLoading('rebalancing');
+            
+            try {
+                const accountType = document.getElementById('accountType').value;
+                const response = await fetch(`${API_BASE}/api/analyze/rebalancing-strategy`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        allocation: currentPortfolio,
+                        account_type: accountType,
+                        start_date: '2020-01-01',
+                        end_date: '2024-12-31'
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to load rebalancing analysis');
+                
+                const data = await response.json();
+                
+                // Find best strategy
+                const bestStrategy = data.strategy_comparison.reduce((best, current) => 
+                    current.net_return > best.net_return ? current : best
+                );
+                
+                document.getElementById('bestStrategy').textContent = bestStrategy.strategy_name;
+                document.getElementById('costSavings').textContent = `$${Math.round(bestStrategy.annual_cost_savings)}`;
+                document.getElementById('rebalanceFreq').textContent = bestStrategy.frequency || 'Threshold-based';
+                document.getElementById('thresholdOptimal').textContent = bestStrategy.threshold ? `${bestStrategy.threshold}%` : 'N/A';
+                
+                // Create strategy comparison chart
+                createRebalancingChart(data);
+                
+            } catch (error) {
+                console.error('Rebalancing analysis error:', error);
+                showError('rebalancing', `Rebalancing analysis failed: ${error.message}`);
+            }
+        }
+        
+        // Chart creation functions
+        function createPerformanceChart(data) {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            if (performanceChart) {
+                performanceChart.destroy();
+            }
+            
+            // Prepare data for cumulative returns
+            const dates = data.performance_data.map(d => d.date);
+            const returns = data.performance_data.map(d => d.cumulative_return * 100);
+            
+            performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Portfolio Return (%)',
+                        data: returns,
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        fill: true,
+                        tension: 0.2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Cumulative Return (%)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createAllocationChart() {
+            const ctx = document.getElementById('allocationChart').getContext('2d');
+            
+            if (allocationChart) {
+                allocationChart.destroy();
+            }
+            
+            const assets = Object.keys(currentPortfolio).filter(asset => currentPortfolio[asset] > 0.001);
+            const weights = assets.map(asset => currentPortfolio[asset] * 100);
+            const colors = ['#4f46e5', '#7c3aed', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+            
+            allocationChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: assets.map(asset => `${asset} (${assetNames[asset]})`),
+                    datasets: [{
+                        data: weights,
+                        backgroundColor: colors.slice(0, assets.length),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }        
+        function createRegimeChart(regimes) {
+            const ctx = document.getElementById('regimeChart').getContext('2d');
+            
+            if (regimeChart) {
+                regimeChart.destroy();
+            }
+            
+            // Group regimes by type for visualization
+            const regimeTypes = ['Bull', 'Bear', 'Crisis', 'Recovery', 'Sideways'];
+            const regimeCounts = regimeTypes.map(type => 
+                regimes.filter(r => r.regime_type === type).length
+            );
+            
+            const colors = {
+                'Bull': '#16a34a',
+                'Bear': '#dc2626', 
+                'Crisis': '#d97706',
+                'Recovery': '#2563eb',
+                'Sideways': '#6b7280'
+            };
+            
+            regimeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: regimeTypes,
+                    datasets: [{
+                        label: 'Number of Periods',
+                        data: regimeCounts,
+                        backgroundColor: regimeTypes.map(type => colors[type])
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Periods'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createCorrelationChart(correlationData) {
+            const ctx = document.getElementById('correlationChart').getContext('2d');
+            
+            if (correlationChart) {
+                correlationChart.destroy();
+            }
+            
+            // Sample correlation evolution data (would come from API)
+            const periods = correlationData && correlationData.length > 0 
+                ? correlationData.map((d, i) => `Period ${i+1}`) 
+                : ['2015-2019', '2016-2020', '2017-2021', '2018-2022', '2019-2023'];
+            const effectiveness = correlationData && correlationData.length > 0
+                ? correlationData.map(d => d.diversification_effectiveness * 100)
+                : [65, 62, 58, 55, 59];
+            
+            correlationChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: periods,
+                    datasets: [{
+                        label: 'Diversification Effectiveness (%)',
+                        data: effectiveness,
+                        borderColor: '#7c3aed',
+                        backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Effectiveness (%)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createDrawdownChart(data) {
+            const ctx = document.getElementById('drawdownChart').getContext('2d');
+            
+            if (drawdownChart) {
+                drawdownChart.destroy();
+            }
+            
+            // Sample drawdown data
+            const crisisNames = data.crisis_analysis.map(c => c.crisis_name || c.period);
+            const drawdowns = data.crisis_analysis.map(c => Math.abs(c.max_drawdown * 100));
+            
+            drawdownChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: crisisNames,
+                    datasets: [{
+                        label: 'Max Drawdown (%)',
+                        data: drawdowns,
+                        backgroundColor: ['#dc2626', '#d97706', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Drawdown (%)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createRecoveryChart(data) {
+            const ctx = document.getElementById('recoveryChart').getContext('2d');
+            
+            if (recoveryChart) {
+                recoveryChart.destroy();
+            }
+            
+            const crisisNames = data.crisis_analysis.map(c => c.crisis_name || c.period);
+            const recoveryDays = data.crisis_analysis.map(c => c.recovery_days || 0);
+            
+            recoveryChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: crisisNames,
+                    datasets: [{
+                        label: 'Recovery Time (Days)',
+                        data: recoveryDays,
+                        backgroundColor: ['#2563eb', '#06b6d4', '#10b981']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Days to Recovery'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createRollingChart(data) {
+            const ctx = document.getElementById('rollingChart').getContext('2d');
+            
+            if (rollingChart) {
+                rollingChart.destroy();
+            }
+            
+            // Create histogram of rolling returns
+            const returns = data.rolling_periods.map(p => p.cagr * 100);
+            const bins = 10;
+            const min = Math.min(...returns);
+            const max = Math.max(...returns);
+            const binWidth = (max - min) / bins;
+            
+            const histogram = new Array(bins).fill(0);
+            const labels = [];
+            
+            for (let i = 0; i < bins; i++) {
+                const binStart = min + (i * binWidth);
+                const binEnd = min + ((i + 1) * binWidth);
+                labels.push(`${binStart.toFixed(1)}%-${binEnd.toFixed(1)}%`);
+                
+                returns.forEach(ret => {
+                    if (ret >= binStart && ret < binEnd) {
+                        histogram[i]++;
+                    }
+                });
+            }
+            
+            rollingChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Periods',
+                        data: histogram,
+                        backgroundColor: '#4f46e5'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'CAGR Range'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Frequency'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createRebalancingChart(data) {
+            const ctx = document.getElementById('rebalancingChart').getContext('2d');
+            
+            if (rebalancingChart) {
+                rebalancingChart.destroy();
+            }
+            
+            const strategies = data.strategy_comparison.map(s => s.strategy_name);
+            const returns = data.strategy_comparison.map(s => s.net_return * 100);
+            const costs = data.strategy_comparison.map(s => s.total_costs);
+            
+            rebalancingChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: strategies,
+                    datasets: [
+                        {
+                            label: 'Net Return (%)',
+                            data: returns,
+                            backgroundColor: '#4f46e5',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Total Costs ($)',
+                            data: costs,
+                            backgroundColor: '#ef4444',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Net Return (%)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Total Costs ($)'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Chat functions
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            const chatContainer = document.getElementById('chatMessages');
+            
+            // Add user message
+            const userDiv = document.createElement('div');
+            userDiv.className = 'message-user';
+            userDiv.innerHTML = `<strong>You:</strong> ${message}`;
+            userDiv.style.marginBottom = '1rem';
+            chatContainer.appendChild(userDiv);
+            
+            input.value = '';
+            
+            // Add loading message
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message-assistant';
+            loadingDiv.innerHTML = '<strong>Claude:</strong> <em>Thinking...</em>';
+            loadingDiv.style.marginBottom = '1rem';
+            chatContainer.appendChild(loadingDiv);
+            
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/chat/recommend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                
+                if (!response.ok) throw new Error('Chat failed');
+                
+                const data = await response.json();
+                
+                // Replace loading message
+                loadingDiv.innerHTML = `<strong>Claude:</strong> ${data.explanation || 'I can help with portfolio analysis. Try asking about specific allocations or risk analysis.'}`;
+                
+            } catch (error) {
+                console.error('Chat error:', error);
+                loadingDiv.innerHTML = `<strong>Claude:</strong> Sorry, I encountered an error. Please try again.`;
+            }
+        }
+        
+        // Utility functions
+        function showLoading(sectionId) {
+            const section = document.getElementById(sectionId);
+            const existingLoading = section.querySelector('.loading-overlay');
+            if (existingLoading) return;
+            
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'loading-overlay';
+            loadingDiv.style.position = 'absolute';
+            loadingDiv.style.top = '0';
+            loadingDiv.style.left = '0';
+            loadingDiv.style.right = '0';
+            loadingDiv.style.bottom = '0';
+            loadingDiv.style.background = 'rgba(255,255,255,0.8)';
+            loadingDiv.style.display = 'flex';
+            loadingDiv.style.alignItems = 'center';
+            loadingDiv.style.justifyContent = 'center';
+            loadingDiv.style.zIndex = '1000';
+            loadingDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Loading analysis...</div>';
+            
+            const firstCard = section.querySelector('.card');
+            if (firstCard) {
+                firstCard.style.position = 'relative';
+                firstCard.appendChild(loadingDiv);
+            }
+            
+            // Remove loading after timeout
+            setTimeout(() => {
+                if (loadingDiv.parentNode) {
+                    loadingDiv.remove();
+                }
+            }, 30000);
+        }
+        
+        function hideLoading(sectionId) {
+            const section = document.getElementById(sectionId);
+            const loading = section.querySelector('.loading-overlay');
+            if (loading) {
+                loading.remove();
+            }
+        }
+        
+        function showError(sectionId, message) {
+            hideLoading(sectionId);
+            const section = document.getElementById(sectionId);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            errorDiv.style.margin = '1rem 0';
+            
+            const firstCard = section.querySelector('.card .card-body');
+            if (firstCard) {
+                firstCard.insertBefore(errorDiv, firstCard.firstChild);
+            }
+            
+            // Remove error after 5 seconds
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.remove();
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
