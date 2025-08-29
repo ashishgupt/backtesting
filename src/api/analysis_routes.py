@@ -1,0 +1,430 @@
+"""
+Analysis Routes - Advanced Analytics Endpoints
+
+This module provides endpoints for sophisticated portfolio analysis including:
+- Rolling period analysis for performance consistency 
+- Crisis period stress testing and recovery analysis
+- Timeline-aware risk recommendations
+- Rebalancing strategy comparison and optimization
+"""
+
+from fastapi import APIRouter, HTTPException, Depends
+from typing import Dict, List, Optional, Union
+from datetime import datetime, timedelta
+import pandas as pd
+import numpy as np
+import logging
+from pydantic import BaseModel, Field, validator
+
+# Import core analysis engines
+from ..core.rolling_period_analyzer import RollingPeriodAnalyzer
+from ..core.crisis_period_analyzer import CrisisPeriodAnalyzer
+from ..core.recovery_time_analyzer import RecoveryTimeAnalyzer  
+from ..core.timeline_risk_analyzer import TimelineRiskAnalyzer
+from ..core.rebalancing_strategy_analyzer import RebalancingStrategyAnalyzer
+from ..models.database import get_db, SessionLocal
+from ..core.portfolio_engine import PortfolioEngine
+
+logger = logging.getLogger(__name__)
+router = APIRouter()
+
+# Pydantic Models for API requests and responses
+class PortfolioAllocation(BaseModel):
+    """Portfolio allocation weights"""
+    allocation: Dict[str, float] = Field(..., description="Asset allocation weights (must sum to 1.0)")
+    
+    @validator('allocation')
+    def validate_allocation(cls, v):
+        total = sum(v.values())
+        if abs(total - 1.0) > 0.001:
+            raise ValueError(f"Allocation must sum to 1.0, got {total}")
+        for symbol, weight in v.items():
+            if weight < 0 or weight > 1:
+                raise ValueError(f"Weight for {symbol} must be between 0 and 1, got {weight}")
+        return v
+
+class RollingPeriodsRequest(PortfolioAllocation):
+    """Request model for rolling periods analysis"""
+    period_years: int = Field(5, ge=1, le=20, description="Rolling period length in years")
+    start_date: Optional[datetime] = Field(None, description="Analysis start date")
+    end_date: Optional[datetime] = Field(None, description="Analysis end date")
+
+class RollingPeriodsMultiRequest(PortfolioAllocation):
+    """Request model for multi-period rolling analysis"""  
+    period_years_list: List[int] = Field([3, 5, 10], description="List of rolling period lengths")
+    start_date: Optional[datetime] = Field(None, description="Analysis start date")
+    end_date: Optional[datetime] = Field(None, description="Analysis end date")
+
+class StressTestRequest(PortfolioAllocation):
+    """Request model for crisis stress testing"""
+    crisis_periods: Optional[List[str]] = Field(None, description="Specific crisis periods to analyze")
+
+class CustomCrisisRequest(PortfolioAllocation):
+    """Request model for custom crisis period analysis"""
+    start_date: datetime = Field(..., description="Crisis period start date")
+    end_date: datetime = Field(..., description="Crisis period end date") 
+    crisis_name: str = Field(..., description="Name for the crisis period")
+    crisis_type: str = Field("custom", description="Type of crisis")
+
+class RecoveryAnalysisRequest(PortfolioAllocation):
+    """Request model for recovery time analysis"""
+    start_date: Optional[datetime] = Field(None, description="Analysis start date")
+    end_date: Optional[datetime] = Field(None, description="Analysis end date")
+    min_drawdown_pct: float = Field(0.05, ge=0.01, le=0.5, description="Minimum drawdown threshold")
+
+class TimelineRiskRequest(PortfolioAllocation):
+    """Request model for timeline-based risk analysis"""
+    investment_horizon_years: int = Field(10, ge=1, le=50, description="Investment timeline in years")
+    age: Optional[int] = Field(None, ge=18, le=100, description="Investor age")
+    risk_tolerance: str = Field("moderate", description="Risk tolerance level")
+
+class RebalancingStrategyRequest(PortfolioAllocation):
+    """Request model for rebalancing strategy analysis"""
+    strategy_type: str = Field("threshold", description="Rebalancing strategy type")
+    threshold_pct: Optional[float] = Field(0.05, description="Drift threshold for threshold-based rebalancing")
+    rebalance_frequency: Optional[str] = Field("quarterly", description="Frequency for time-based rebalancing")
+    account_type: str = Field("taxable", description="Account type (taxable, tax_deferred, tax_free)")
+    monthly_contribution: Optional[float] = Field(0, description="Monthly contribution for new money strategy")
+
+# API Endpoints
+
+@router.post("/rolling-periods", 
+             summary="Rolling Periods Analysis",
+             description="Analyze portfolio performance consistency across rolling time periods")
+async def analyze_rolling_periods(request: RollingPeriodsRequest, db: SessionLocal = Depends(get_db)):
+    """
+    Perform rolling periods analysis to evaluate performance consistency
+    
+    This endpoint analyzes how a portfolio performs across overlapping time periods
+    to identify consistency patterns, best/worst performing periods, and volatility.
+    """
+    try:
+        analyzer = RollingPeriodAnalyzer()
+        
+        result = analyzer.analyze_single_period(
+            allocation=request.allocation,
+            period_years=request.period_years,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            db_session=db
+        )
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error in rolling periods analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+@router.post("/rolling-periods/multi",
+             summary="Multi-Period Rolling Analysis", 
+             description="Compare performance across multiple rolling period lengths")
+async def analyze_multi_rolling_periods(request: RollingPeriodsMultiRequest, db: SessionLocal = Depends(get_db)):
+    """
+    Compare portfolio performance across different rolling period lengths
+    
+    Provides comprehensive analysis showing how consistency and returns vary
+    when evaluated over different time horizons (e.g., 3-year vs 5-year rolling periods).
+    """
+    try:
+        analyzer = RollingPeriodAnalyzer()
+        
+        result = analyzer.analyze_multiple_periods(
+            allocation=request.allocation,
+            period_years_list=request.period_years_list,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            db_session=db
+        )
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error in multi-period rolling analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+@router.post("/stress-test",
+             summary="Crisis Period Stress Test",
+             description="Test portfolio resilience during major market crises")  
+async def stress_test_portfolio(request: StressTestRequest, db: SessionLocal = Depends(get_db)):
+    """
+    Stress test portfolio performance during major historical crises
+    
+    Analyzes how the portfolio would have performed during major market downturns
+    including the 2008 Financial Crisis, 2020 COVID crash, and 2022 bear market.
+    """
+    try:
+        analyzer = CrisisPeriodAnalyzer()
+        
+        result = analyzer.analyze_crisis_performance(
+            allocation=request.allocation,
+            crisis_periods=request.crisis_periods,
+            db_session=db
+        )
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error in crisis stress test: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+@router.get("/crisis-periods",
+            summary="Available Crisis Periods",
+            description="Get list of available crisis periods for analysis")
+async def get_available_crisis_periods():
+    """
+    Return list of predefined crisis periods available for analysis
+    
+    Provides metadata about major historical market crises that can be
+    used for stress testing portfolio performance.
+    """
+    try:
+        analyzer = CrisisPeriodAnalyzer()
+        return analyzer.get_available_periods()
+        
+    except Exception as e:
+        logger.error(f"Error getting crisis periods: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get crisis periods: {str(e)}")
+
+@router.post("/recovery-analysis",
+             summary="Recovery Time Analysis", 
+             description="Analyze portfolio recovery patterns from drawdowns")
+async def analyze_recovery_patterns(request: RecoveryAnalysisRequest, db: SessionLocal = Depends(get_db)):
+    """
+    Analyze how quickly portfolio recovers from major drawdowns
+    
+    Identifies drawdown periods, recovery velocity, and overall resilience
+    to help understand portfolio behavior during market stress.
+    """
+    try:
+        analyzer = RecoveryTimeAnalyzer()
+        
+        result = analyzer.analyze_recovery_patterns(
+            allocation=request.allocation,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            min_drawdown_pct=request.min_drawdown_pct,
+            db_session=db
+        )
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error in recovery analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+@router.post("/timeline-risk",
+             summary="Timeline-Based Risk Analysis",
+             description="Get personalized risk recommendations based on investment timeline")
+async def analyze_timeline_risk(request: TimelineRiskRequest, db: SessionLocal = Depends(get_db)):
+    """
+    Provide timeline-aware portfolio risk analysis and recommendations
+    
+    Considers investment horizon, age, and risk tolerance to suggest
+    appropriate portfolio allocations and risk management strategies.
+    """
+    try:
+        analyzer = TimelineRiskAnalyzer()
+        
+        result = analyzer.analyze_timeline_risk(
+            allocation=request.allocation,
+            investment_horizon_years=request.investment_horizon_years,
+            age=request.age,
+            risk_tolerance=request.risk_tolerance,
+            db_session=db
+        )
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error in timeline risk analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+@router.post("/rebalancing-strategy",
+             summary="Rebalancing Strategy Analysis",
+             description="Analyze and compare different rebalancing strategies")
+async def analyze_rebalancing_strategy(request: RebalancingStrategyRequest, db: SessionLocal = Depends(get_db)):
+    """
+    Analyze the effectiveness of different rebalancing strategies
+    
+    Compares threshold-based, time-based, and new money rebalancing approaches
+    with consideration for transaction costs and tax implications.
+    """
+    try:
+        analyzer = RebalancingStrategyAnalyzer()
+        
+        result = analyzer.analyze_rebalancing_strategy(
+            allocation=request.allocation,
+            strategy_type=request.strategy_type,
+            threshold_pct=request.threshold_pct,
+            rebalance_frequency=request.rebalance_frequency,
+            account_type=request.account_type,
+            monthly_contribution=request.monthly_contribution,
+            db_session=db
+        )
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error in rebalancing strategy analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+@router.get("/examples",
+            summary="Analysis Examples", 
+            description="Get example requests for all analysis endpoints")
+async def get_analysis_examples():
+    """
+    Get example requests for analysis endpoints
+    
+    Returns sample payloads that can be used to test the various
+    analysis endpoints including rolling periods and crisis analysis.
+    """
+    return {
+        "rolling_period_analysis": {
+            "endpoint": "POST /api/analyze/rolling-periods",
+            "example_request": {
+                "allocation": {"VTI": 0.6, "VTIAX": 0.3, "BND": 0.1},
+                "period_years": 5,
+                "start_date": "2010-01-01T00:00:00Z",
+                "end_date": "2024-01-01T00:00:00Z"
+            }
+        },
+        "crisis_stress_test": {
+            "endpoint": "POST /api/analyze/stress-test",
+            "example_request": {
+                "allocation": {"VTI": 0.6, "VTIAX": 0.3, "BND": 0.1},
+                "crisis_periods": ["2008 Financial Crisis", "2020 COVID-19 Crash"]
+            }
+        },
+        "rebalancing_strategy": {
+            "endpoint": "POST /api/analyze/rebalancing-strategy",
+            "example_request": {
+                "allocation": {"VTI": 0.6, "VTIAX": 0.3, "BND": 0.1},
+                "strategy_type": "threshold",
+                "threshold_pct": 0.05,
+                "account_type": "taxable"
+            }
+        },
+        "extended_historical_analysis": {
+            "endpoint": "POST /api/analyze/extended-historical",
+            "example_request": {
+                "allocation": {"VTI": 0.6, "VTIAX": 0.3, "BND": 0.1},
+                "start_date": "2004-01-01T00:00:00Z",
+                "end_date": "2024-01-01T00:00:00Z"
+            }
+        },
+        "period_comparison": {
+            "endpoint": "POST /api/analyze/period-comparison", 
+            "example_request": {
+                "allocation": {"VTI": 0.6, "VTIAX": 0.3, "BND": 0.1},
+                "comparison_periods": [10, 20]
+            }
+        }
+    }
+
+
+class ExtendedHistoricalRequest(PortfolioAllocation):
+    """Request model for extended historical analysis"""
+    start_date: Optional[datetime] = Field(None, description="Analysis start date (defaults to 20 years ago)")
+    end_date: Optional[datetime] = Field(None, description="Analysis end date (defaults to now)")
+
+class PeriodComparisonRequest(PortfolioAllocation):
+    """Request model for period performance comparison"""
+    comparison_periods: List[int] = Field([10, 20], description="List of periods in years to compare")
+
+# Import the new analyzer
+from ..core.extended_historical_analyzer import ExtendedHistoricalAnalyzer
+
+@router.post("/extended-historical",
+             summary="Extended Historical Analysis",
+             description="Comprehensive 20-year market cycle and correlation analysis")
+async def analyze_extended_historical(request: ExtendedHistoricalRequest, db: SessionLocal = Depends(get_db)):
+    """
+    Perform comprehensive 20-year historical analysis
+    
+    This endpoint provides advanced market cycle analysis, correlation evolution tracking,
+    regime change detection, and long-term vs short-term performance comparisons.
+    """
+    try:
+        analyzer = ExtendedHistoricalAnalyzer()
+        
+        result = analyzer.analyze_extended_historical_performance(
+            allocation=request.allocation,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            db_session=db
+        )
+        
+        # Convert dataclass to dictionary for JSON response
+        response_dict = {
+            "analysis_period_start": result.analysis_period_start.isoformat(),
+            "analysis_period_end": result.analysis_period_end.isoformat(),
+            "total_years": result.total_years,
+            "full_period_cagr": result.full_period_cagr,
+            "first_decade_cagr": result.first_decade_cagr,
+            "second_decade_cagr": result.second_decade_cagr,
+            "market_regimes": [
+                {
+                    "start_date": regime.start_date.isoformat(),
+                    "end_date": regime.end_date.isoformat(),
+                    "regime_type": regime.regime_type,
+                    "duration_days": regime.duration_days,
+                    "market_return": regime.market_return,
+                    "volatility": regime.volatility,
+                    "description": regime.description
+                } for regime in result.market_regimes
+            ],
+            "regime_performance": result.regime_performance,
+            "correlation_periods": [
+                {
+                    "start_date": period.start_date.isoformat(),
+                    "end_date": period.end_date.isoformat(),
+                    "period_years": period.period_years,
+                    "correlation_matrix": period.correlation_matrix,
+                    "avg_correlation": period.avg_correlation,
+                    "diversification_ratio": period.diversification_ratio,
+                    "dominant_factor_exposure": period.dominant_factor_exposure
+                } for period in result.correlation_periods
+            ],
+            "correlation_trend": result.correlation_trend,
+            "diversification_effectiveness": result.diversification_effectiveness,
+            "regime_transition_alpha": result.regime_transition_alpha,
+            "adaptation_recommendations": result.adaptation_recommendations,
+            "volatility_clustering_periods": [
+                {
+                    "start_date": period[0].isoformat(),
+                    "end_date": period[1].isoformat()
+                } for period in result.volatility_clustering_periods
+            ],
+            "tail_risk_evolution": result.tail_risk_evolution
+        }
+        
+        return response_dict
+        
+    except Exception as e:
+        logger.error(f"Error in extended historical analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+@router.post("/period-comparison",
+             summary="Period Performance Comparison",
+             description="Compare portfolio performance across different historical periods")
+async def compare_period_performance(request: PeriodComparisonRequest, db: SessionLocal = Depends(get_db)):
+    """
+    Compare portfolio performance across different historical time periods
+    
+    Analyzes how the portfolio would have performed over different time horizons
+    (e.g., 10-year vs 20-year periods) to understand long-term consistency.
+    """
+    try:
+        analyzer = ExtendedHistoricalAnalyzer()
+        
+        result = analyzer.compare_period_performance(
+            allocation=request.allocation,
+            comparison_periods=request.comparison_periods,
+            db_session=db
+        )
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error in period comparison analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")

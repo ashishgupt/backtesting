@@ -39,7 +39,8 @@ class OptimizedPortfolioEngine:
                           initial_value: float = 10000, 
                           start_date: str = "2015-01-01",
                           end_date: str = "2024-12-31", 
-                          rebalance_frequency: str = "monthly") -> Dict:
+                          rebalance_frequency: str = "monthly",
+                          include_daily_data: bool = False) -> Dict:
         """OPTIMIZED backtest a portfolio allocation over time"""
         
         # Validate allocation
@@ -68,7 +69,7 @@ class OptimizedPortfolioEngine:
         
         # Calculate portfolio performance using vectorized operations
         portfolio_results = self._calculate_portfolio_performance_vectorized(
-            price_data, dividend_data, allocation, initial_value, rebalance_frequency
+            price_data, dividend_data, allocation, initial_value, rebalance_frequency, include_daily_data
         )
         
         return portfolio_results
@@ -77,7 +78,8 @@ class OptimizedPortfolioEngine:
                                                    dividend_data: pd.DataFrame,
                                                    allocation: Dict[str, float], 
                                                    initial_value: float,
-                                                   rebalance_freq: str) -> Dict:
+                                                   rebalance_freq: str,
+                                                   include_daily_data: bool = False) -> Dict:
         """VECTORIZED portfolio performance calculation with exact original logic match"""
         
         # Convert to numpy arrays for vectorized operations
@@ -150,13 +152,28 @@ class OptimizedPortfolioEngine:
         # Calculate performance metrics
         metrics = self._calculate_performance_metrics(portfolio_df, initial_value)
         
-        return {
+        result = {
             'portfolio_history': portfolio_df,
             'performance_metrics': metrics,
             'final_value': portfolio_values[-1],
             'total_return': (portfolio_values[-1] - initial_value) / initial_value,
             'rebalance_dates': rebalance_dates
         }
+        
+        # Add daily data if requested (for recovery analysis)
+        if include_daily_data:
+            daily_data = []
+            for i, date in enumerate(dates):
+                cumulative_return = (portfolio_values[i] - initial_value) / initial_value
+                daily_data.append({
+                    'date': date.strftime('%Y-%m-%d'),
+                    'portfolio_value': portfolio_values[i],
+                    'daily_return': daily_returns[i],
+                    'cumulative_return': cumulative_return
+                })
+            result['daily_data'] = daily_data
+            
+        return result
     
     def _get_rebalance_dates_exact(self, dates: pd.DatetimeIndex, frequency: str) -> List[date]:
         """Get list of rebalancing dates (EXACT original logic)"""
@@ -197,6 +214,17 @@ class OptimizedPortfolioEngine:
         end_date = portfolio_df['Date'].iloc[-1]
         years = (end_date - start_date).days / 365.25
         
+        # Ensure we have valid data
+        if years <= 0:
+            raise ValueError(f"Invalid time period: {years} years")
+        
+        # Helper function to safely convert values that might be NaN/inf
+        def safe_float(value, default=0.0):
+            """Convert to safe float that can be JSON serialized"""
+            if value is None or np.isnan(value) or np.isinf(value):
+                return default
+            return float(value)
+        
         # Total return
         total_return = (portfolio_values[-1] - initial_value) / initial_value
         
@@ -232,16 +260,16 @@ class OptimizedPortfolioEngine:
         avg_loss = np.mean(negative_returns) if len(negative_returns) > 0 else 0
         
         return {
-            'cagr': round(float(cagr), 4),
-            'total_return': round(float(total_return), 4),
-            'volatility': round(float(volatility), 4),
-            'sharpe_ratio': round(float(sharpe_ratio), 4),
-            'max_drawdown': round(float(max_drawdown), 4),
-            'sortino_ratio': round(float(sortino_ratio), 4),
-            'win_rate': round(float(win_rate), 4),
-            'avg_daily_gain': round(float(avg_gain), 6),
-            'avg_daily_loss': round(float(avg_loss), 6),
-            'years': round(float(years), 2),
+            'cagr': round(safe_float(cagr), 4),
+            'total_return': round(safe_float(total_return), 4),
+            'volatility': round(safe_float(volatility), 4),
+            'sharpe_ratio': round(safe_float(sharpe_ratio), 4),
+            'max_drawdown': round(safe_float(max_drawdown), 4),
+            'sortino_ratio': round(safe_float(sortino_ratio), 4),
+            'win_rate': round(safe_float(win_rate), 4),
+            'avg_daily_gain': round(safe_float(avg_gain), 6),
+            'avg_daily_loss': round(safe_float(avg_loss), 6),
+            'years': round(safe_float(years), 2),
             'total_trading_days': len(portfolio_values)
         }
     

@@ -18,6 +18,8 @@ from src.api.backtesting import router as backtesting_router
 from src.api.data_routes import router as data_router
 from src.api.optimization_routes import router as optimization_router
 from src.api.claude_routes import router as claude_router
+# from src.api.analysis_routes import router as analysis_router  # Temporarily disabled due to syntax error
+from src.api.rebalancing_routes import rebalancing_router
 
 # Configure logging
 logging.basicConfig(
@@ -49,6 +51,8 @@ app.include_router(backtesting_router)
 app.include_router(data_router)
 app.include_router(optimization_router)
 app.include_router(claude_router)
+# app.include_router(analysis_router)  # Temporarily disabled due to syntax error
+app.include_router(rebalancing_router)
 
 # Mount static files for web UI
 app.mount("/static", StaticFiles(directory="web"), name="static")
