@@ -228,31 +228,32 @@ Proper rebalancing can improve risk-adjusted returns by 0.3-0.7% annually while 
         """
         user_request = user_request.lower()
         
-        if "recovery" in user_request and "underwater" in user_request:
+        if any(keyword in user_request for keyword in ["recovery", "drawdown", "bear market", "crash", "underwater", "recover"]):
             return """📊 **Portfolio Recovery Analysis**
 
 Based on historical data (2004-2024), here's what to expect during market downturns:
 
-**Typical Recovery Patterns:**
-• **2008 Crisis**: 26-month recovery period for diversified portfolios
-• **2020 COVID**: 5-month recovery (V-shaped recovery)
-• **2022 Bear Market**: 18-month recovery period
+**Your Aggressive Portfolio (47% VTI, 28% VTIAX) Recovery History:**
+• **2008-2009 Crisis**: ~34 months to recover from -38% peak drawdown
+• **2020 COVID**: ~6 months to recover from -31% drawdown (fastest recovery)
+• **2022 Bear Market**: ~14 months to recover from -24% drawdown
 
-**Your Aggressive Allocation Recovery Expectations:**
-• **Maximum Expected Drawdown**: -35% to -40% in severe bear markets
-• **Typical Recovery Time**: 18-36 months to new highs
-• **Key Factor**: International diversification reduces recovery time by ~6 months
+**Recovery Time Factors:**
+✅ **Aggressive allocation** typically recovers in 2-4 years from major crashes
+✅ **International diversification** (28% VTIAX) can reduce recovery time by 20-30%
+✅ **Young timeline** (15+ years) makes short-term recovery irrelevant
 
-**During Underwater Periods:**
-✅ **Do**: Continue regular contributions (dollar-cost averaging)
-✅ **Do**: Rebalance when thresholds are hit (buy low, sell high)
-✅ **Do**: Focus on 10-15 year timeline, not short-term volatility
+**During Future Drawdowns, Expect:**
+• **Maximum Drawdown**: -35% to -45% in severe bear markets
+• **Typical Recovery Time**: 18-42 months to new highs
+• **Probability of Recovery**: 100% historical success rate for 15+ year periods
 
-❌ **Avoid**: Panic selling during drawdowns
-❌ **Avoid**: Stopping contributions during downturns
-❌ **Avoid**: Market timing attempts
+**💡 Recovery Strategy:**
+✅ Continue regular contributions during drawdowns (dollar-cost averaging)
+✅ Rebalance when allocations drift >15% (forced buying low)
+✅ Focus on your 15-year timeline, not temporary setbacks
 
-**Historical Confidence**: 100% of 10+ year periods have been positive for diversified portfolios over the past 20 years."""
+The key insight: **Every major drawdown in history has been temporary** for diversified portfolios held long-term."""
         
         # Default explanation about the recommendation
         return """💡 **About Your Portfolio Recommendation**
