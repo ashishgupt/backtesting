@@ -144,20 +144,27 @@ async def get_portfolio_recommendation(
                 conversation_history
             )
             
+            logger.info(f"Enhanced message: {enhanced_message}")
             recommendation = claude_advisor.generate_recommendation(enhanced_message)
+            logger.info(f"Generated recommendation type: {type(recommendation)}")
             
-            # Format natural language response with context awareness
-            formatted_response = claude_advisor.format_recommendation_response(
-                recommendation,
-                conversation_context=context
-            )
+            if recommendation is None:
+                logger.error("generate_recommendation returned None")
+                return create_context_response("Sorry, I couldn't generate a recommendation at this time. Please try again.", last_recommendation)
+            
+            # DEBUG: Use a simple formatted response instead of the complex method
+            simple_formatted_response = f"🎯 Portfolio Recommendation: {recommendation.risk_profile.value.title()} allocation with {recommendation.expected_cagr:.1%} expected returns."
             
             return ChatResponse(
-                recommendation=formatted_response,
+                recommendation=simple_formatted_response,
                 allocation=recommendation.allocation,
                 expected_cagr=recommendation.expected_cagr,
                 expected_volatility=recommendation.expected_volatility,
                 max_drawdown=recommendation.max_drawdown,
+                sharpe_ratio=recommendation.sharpe_ratio,
+                risk_profile=recommendation.risk_profile.value,
+                confidence_score=recommendation.confidence_score
+            )
                 sharpe_ratio=recommendation.sharpe_ratio,
                 risk_profile=recommendation.risk_profile.value,
                 confidence_score=recommendation.confidence_score
@@ -219,50 +226,6 @@ def enrich_message_with_context(message: str, user_preferences: dict, conversati
                 context_summary += f"User asked: {msg.get('content', '')[:50]}... "
     
     return " ".join(enriched_parts)
-                expected_cagr=0.115,
-                expected_volatility=0.16,
-                max_drawdown=-0.32,
-                sharpe_ratio=0.68,
-                risk_profile="aggressive",
-                confidence_score=0.90
-            )
-            
-        elif is_explanation_question:
-            # Handle explanation questions
-            explanation_response = claude_advisor.generate_explanation(request.message)
-            
-            return ChatResponse(
-                recommendation=explanation_response,
-                allocation={"VTI": 0.40, "VTIAX": 0.20, "BND": 0.15, "VNQ": 0.10, "GLD": 0.05, "VWO": 0.07, "QQQ": 0.03},
-                expected_cagr=0.115,
-                expected_volatility=0.16,
-                max_drawdown=-0.32,
-                sharpe_ratio=0.68,
-                risk_profile="aggressive", 
-                confidence_score=0.90
-            )
-        
-        else:
-            # Default: Generate portfolio recommendation using Claude advisor
-            recommendation = claude_advisor.generate_recommendation(request.message)
-            
-            # Format natural language response  
-            formatted_response = claude_advisor.format_recommendation_response(recommendation)
-            
-            return ChatResponse(
-                recommendation=formatted_response,
-                allocation=recommendation.allocation,
-                expected_cagr=recommendation.expected_cagr,
-                expected_volatility=recommendation.expected_volatility,
-                max_drawdown=recommendation.max_drawdown,
-                sharpe_ratio=recommendation.sharpe_ratio,
-                risk_profile=recommendation.risk_profile.value,
-                confidence_score=recommendation.confidence_score
-            )
-        
-    except Exception as e:
-        logger.error(f"Recommendation generation failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate recommendation: {str(e)}")
 
 @router.post("/analyze", response_model=AnalysisResponse)
 async def analyze_portfolio(

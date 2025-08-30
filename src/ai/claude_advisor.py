@@ -57,11 +57,11 @@ class ClaudePortfolioAdvisor:
             }
         }
     
-    def parse_natural_language_request(self, user_message: str) -> Dict:
+    def parse_natural_language_request(self, user_request: str) -> Dict:
         """
         Parse natural language portfolio request and extract key parameters
         """
-        user_message = user_message.lower()
+        user_message = user_request.lower()
         
         # Initialize parsing results
         parsed = {
@@ -278,20 +278,6 @@ Based on historical data (2004-2024), here's what to expect during market downtu
 Ask me about specific aspects like rebalancing, risk management, or recovery expectations!"""
         
     def generate_recommendation(self, user_request: str) -> PortfolioRecommendation:
-        """
-        Handle conversational flow and determine appropriate response type
-        """
-        parsed = self.parse_natural_language_request(user_message)
-        
-        if parsed["request_type"] == "rebalancing_strategy":
-            return self.generate_rebalancing_recommendation(user_message)
-        elif parsed["request_type"] == "recovery_analysis":
-            return self.generate_explanation(user_message)
-        elif parsed["request_type"] == "explanation":
-            return self.generate_explanation(user_message)
-        else:
-            # Default to portfolio recommendation
-            return self.generate_recommendation(user_message)
         """
         Generate portfolio recommendation based on natural language request
         """
