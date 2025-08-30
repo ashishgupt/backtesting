@@ -88,31 +88,32 @@ class ClaudePortfolioAdvisor:
         if any(word in user_message for word in ["this portfolio", "the portfolio", "your recommendation", "that allocation"]):
             parsed["follow_up_question"] = True
         
-        # Risk tolerance keywords
-        if any(word in user_message for word in ["conservative", "safe", "low risk", "stable"]):
+        # Risk tolerance keywords - ENHANCED for max return detection
+        if any(word in user_message for word in ["conservative", "safe", "low risk", "stable", "capital preservation"]):
             parsed["risk_tolerance"] = InvestorProfile.CONSERVATIVE
-        elif any(word in user_message for word in ["aggressive", "high risk", "growth", "risky"]):
+        elif any(word in user_message for word in ["aggressive", "high risk", "growth", "risky", "max return", "maximum return", "highest return", "max growth", "maximum growth", "highest growth"]):
             parsed["risk_tolerance"] = InvestorProfile.AGGRESSIVE
         elif any(word in user_message for word in ["balanced", "moderate", "medium risk"]):
             parsed["risk_tolerance"] = InvestorProfile.BALANCED
             
-        # Investment horizon
-        if any(word in user_message for word in ["retire", "retirement", "long term", "decades", "30 years", "20 years"]):
+        # Investment horizon - FIXED timeline logic
+        if any(word in user_message for word in ["retire", "retirement", "long term", "decades", "30 years", "20 years", "15 years"]):
             parsed["investment_horizon"] = "long_term"
-        elif any(word in user_message for word in ["short term", "few years", "5 years", "3 years", "near term", "next year", "1 year", "soon"]):
+        elif any(word in user_message for word in ["short term", "next year", "1 year", "2 years", "soon", "immediately"]):
             parsed["investment_horizon"] = "short_term"
         else:
             parsed["investment_horizon"] = "medium_term"
             
-        # Extract specific timeframes
+        # Extract specific timeframes - CORRECTED 5+ year logic
         time_match = re.search(r'(\d+)\s*years?', user_message)
         if time_match:
             years = int(time_match.group(1))
             parsed["years_to_invest"] = years
-            if years <= 5:
+            if years <= 2:  # Only very short term
                 parsed["investment_horizon"] = "short_term"
-            elif years >= 15:
+            elif years >= 10:  # 10+ years is long term
                 parsed["investment_horizon"] = "long_term"
+            # 3-9 years stays medium_term which allows for moderate-aggressive allocation
             else:
                 parsed["investment_horizon"] = "medium_term"
                 
@@ -309,18 +310,19 @@ Ask me about specific aspects like rebalancing, risk management, or recovery exp
             # Reduce bonds
             base_allocation["BND"] = max(0.0, base_allocation.get("BND", 0) - stock_boost)
         
-        # Handle specific years mentioned
+        # Handle specific years mentioned - RESPECT USER'S RISK TOLERANCE
         if "years_to_invest" in parsed:
             years = parsed["years_to_invest"]
-            if years <= 3:
-                # Very short term - heavy bonds
+            # Only override for very short timelines (≤2 years) or if no risk preference specified
+            if years <= 2 and parsed["risk_tolerance"] is None:
+                # Only force conservative if no risk tolerance specified and very short term
                 base_allocation = {"VTI": 0.2, "VTIAX": 0.1, "BND": 0.7}
-            elif years <= 7:
-                # Short-medium term - moderate bonds
-                base_allocation = {"VTI": 0.4, "VTIAX": 0.2, "BND": 0.4}
-            elif years >= 20:
-                # Very long term - heavy stocks
-                base_allocation = {"VTI": 0.7, "VTIAX": 0.3, "BND": 0.0}
+            elif years >= 15:
+                # Very long term - can be more aggressive regardless of initial risk profile
+                if parsed["risk_tolerance"] == InvestorProfile.CONSERVATIVE:
+                    # Even conservative investors can be more aggressive with 15+ year timeline
+                    base_allocation = {"VTI": 0.5, "VTIAX": 0.2, "BND": 0.3}
+            # For 3-14 years: respect the user's stated risk tolerance (aggressive, balanced, conservative)
         
         # Adjust based on specific preferences
         if parsed["specific_assets"]:
