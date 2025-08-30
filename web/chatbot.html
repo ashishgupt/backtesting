@@ -274,6 +274,7 @@
         <div class="chat-header">
             <h1>🤖 Claude Portfolio Advisor</h1>
             <p>Get personalized investment recommendations using AI-powered analysis</p>
+            <button onclick="clearConversation()" style="position: absolute; right: 20px; top: 20px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; cursor: pointer;">Clear Chat</button>
         </div>
         
         <div class="chat-messages" id="messages">
@@ -311,6 +312,173 @@
         const API_BASE = 'http://127.0.0.1:8007';
         let isLoading = false;
 
+        // SESSION MANAGEMENT & CONVERSATION CONTEXT
+        class ConversationManager {
+            constructor() {
+                this.sessionId = this.generateSessionId();
+                this.conversationHistory = [];
+                this.userPreferences = {};
+                this.lastRecommendation = null;
+                this.userProfile = {};
+                this.loadSession();
+            }
+
+            generateSessionId() {
+                return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            }
+
+            saveSession() {
+                const sessionData = {
+                    sessionId: this.sessionId,
+                    conversationHistory: this.conversationHistory,
+                    userPreferences: this.userPreferences,
+                    lastRecommendation: this.lastRecommendation,
+                    userProfile: this.userProfile,
+                    timestamp: Date.now()
+                };
+                sessionStorage.setItem('portfolio_chat_session', JSON.stringify(sessionData));
+            }
+
+            loadSession() {
+                const savedSession = sessionStorage.getItem('portfolio_chat_session');
+                if (savedSession) {
+                    try {
+                        const sessionData = JSON.parse(savedSession);
+                        // Only load session if it's from the same browser session (within 2 hours)
+                        if (Date.now() - sessionData.timestamp < 2 * 60 * 60 * 1000) {
+                            this.conversationHistory = sessionData.conversationHistory || [];
+                            this.userPreferences = sessionData.userPreferences || {};
+                            this.lastRecommendation = sessionData.lastRecommendation;
+                            this.userProfile = sessionData.userProfile || {};
+                            console.log('Session restored:', this.conversationHistory.length, 'messages');
+                            this.restoreConversationUI();
+                        } else {
+                            this.clearSession();
+                        }
+                    } catch (e) {
+                        console.error('Error loading session:', e);
+                        this.clearSession();
+                    }
+                }
+            }
+
+            clearSession() {
+                sessionStorage.removeItem('portfolio_chat_session');
+                this.conversationHistory = [];
+                this.userPreferences = {};
+                this.lastRecommendation = null;
+                this.userProfile = {};
+            }
+
+            addMessage(message, role, metadata = {}) {
+                const messageData = {
+                    role: role,
+                    content: message,
+                    timestamp: Date.now(),
+                    metadata: metadata
+                };
+                this.conversationHistory.push(messageData);
+                this.saveSession();
+                return messageData;
+            }
+
+            addRecommendation(recommendation) {
+                this.lastRecommendation = {
+                    ...recommendation,
+                    timestamp: Date.now()
+                };
+                
+                // Extract user preferences from the recommendation context
+                if (recommendation.risk_profile) {
+                    this.userPreferences.riskProfile = recommendation.risk_profile;
+                }
+                
+                this.saveSession();
+            }
+
+            updateUserProfile(updates) {
+                this.userProfile = { ...this.userProfile, ...updates };
+                this.saveSession();
+            }
+
+            getContextForAPI() {
+                return {
+                    sessionId: this.sessionId,
+                    conversationHistory: this.conversationHistory.slice(-10), // Last 10 messages for context
+                    userPreferences: this.userPreferences,
+                    lastRecommendation: this.lastRecommendation,
+                    userProfile: this.userProfile
+                };
+            }
+
+            restoreConversationUI() {
+                const messagesContainer = document.getElementById('messages');
+                // Clear existing messages except examples
+                const examples = messagesContainer.querySelector('.examples');
+                messagesContainer.innerHTML = '';
+                if (examples) {
+                    messagesContainer.appendChild(examples);
+                }
+
+                // Restore conversation history
+                this.conversationHistory.forEach(msg => {
+                    if (msg.role === 'user') {
+                        addMessage(msg.content, 'user');
+                    } else if (msg.role === 'assistant') {
+                        if (msg.metadata && msg.metadata.isRecommendation) {
+                            addRecommendation(msg.metadata.recommendationData);
+                        } else {
+                            addMessage(msg.content, 'assistant');
+                        }
+                    }
+                });
+
+                // Show context indicator if conversation was restored
+                if (this.conversationHistory.length > 0) {
+                    addMessage("💾 Previous conversation restored. I remember our discussion and your preferences. Feel free to ask follow-up questions!", 'assistant');
+                }
+            }
+
+            analyzeMessage(message) {
+                const lowerMessage = message.toLowerCase();
+                
+                // Detect follow-up questions
+                const followUpIndicators = [
+                    'this portfolio', 'that portfolio', 'your recommendation', 'the allocation',
+                    'what about', 'how about', 'instead of', 'rather than',
+                    'modify', 'adjust', 'change', 'different', 'alternative',
+                    'explain', 'why', 'how does', 'what if', 'tell me more'
+                ];
+                
+                const isFollowUp = followUpIndicators.some(indicator => 
+                    lowerMessage.includes(indicator)
+                );
+
+                // Detect request type
+                let requestType = 'new_portfolio';
+                if (isFollowUp && this.lastRecommendation) {
+                    requestType = 'follow_up';
+                } else if (lowerMessage.includes('rebalancing') || lowerMessage.includes('rebalance')) {
+                    requestType = 'rebalancing';
+                } else if (lowerMessage.includes('risk') && (lowerMessage.includes('how') || lowerMessage.includes('what'))) {
+                    requestType = 'risk_analysis';
+                } else if (lowerMessage.includes('recovery') || lowerMessage.includes('drawdown')) {
+                    requestType = 'recovery_analysis';
+                }
+
+                return {
+                    isFollowUp,
+                    requestType,
+                    hasContext: this.conversationHistory.length > 0,
+                    userProfile: this.userProfile,
+                    lastRecommendation: this.lastRecommendation
+                };
+            }
+        }
+
+        // Initialize conversation manager
+        const conversationManager = new ConversationManager();
+
         // Auto-resize textarea
         const textarea = document.getElementById('messageInput');
         textarea.addEventListener('input', function() {
@@ -325,6 +493,14 @@
                 sendMessage();
             }
         });
+
+        // Add clear conversation button functionality
+        function clearConversation() {
+            if (confirm('Clear conversation history? This will reset the chatbot memory.')) {
+                conversationManager.clearSession();
+                location.reload();
+            }
+        }
 
         function sendExample(element) {
             const message = element.textContent;
@@ -345,19 +521,32 @@
             input.style.height = 'auto';
             setLoading(true);
             
-            // Add user message
+            // Add user message to UI and conversation history
             addMessage(message, 'user');
+            conversationManager.addMessage(message, 'user');
+            
+            // Analyze message for context
+            const messageAnalysis = conversationManager.analyzeMessage(message);
             
             // Add loading indicator
             const loadingId = addLoadingMessage();
             
             try {
+                // Prepare enhanced request with conversation context
+                const requestPayload = {
+                    message: message,
+                    user_context: {
+                        ...conversationManager.getContextForAPI(),
+                        messageAnalysis: messageAnalysis
+                    }
+                };
+
                 const response = await fetch(`${API_BASE}/api/chat/recommend`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ message })
+                    body: JSON.stringify(requestPayload)
                 });
                 
                 if (!response.ok) {
@@ -369,13 +558,20 @@
                 // Remove loading message
                 document.getElementById(loadingId).remove();
                 
-                // Add recommendation
+                // Add recommendation and update conversation context
                 addRecommendation(data);
+                conversationManager.addRecommendation(data);
+                conversationManager.addMessage(data.recommendation, 'assistant', {
+                    isRecommendation: true,
+                    recommendationData: data
+                });
                 
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById(loadingId).remove();
-                addMessage(`Sorry, I encountered an error: ${error.message}. Please try again.`, 'assistant');
+                const errorMessage = `Sorry, I encountered an error: ${error.message}. Please try again.`;
+                addMessage(errorMessage, 'assistant');
+                conversationManager.addMessage(errorMessage, 'assistant');
             }
             
             setLoading(false);

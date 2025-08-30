@@ -505,6 +505,260 @@ Ask me about specific aspects like rebalancing, risk management, or recovery exp
 """
         
         return response
+    
+    def generate_modified_recommendation(self, user_request: str, base_recommendation: dict, user_preferences: dict = None) -> dict:
+        """
+        Generate a modified portfolio recommendation based on user feedback and previous recommendation
+        """
+        user_request = user_request.lower()
+        base_allocation = base_recommendation.get('allocation', {})
+        
+        # Parse modification requests
+        modified_allocation = base_allocation.copy()
+        
+        if "more bonds" in user_request or "increase bonds" in user_request:
+            # Increase bond allocation
+            bond_increase = 0.10
+            modified_allocation["BND"] = min(0.6, modified_allocation.get("BND", 0) + bond_increase)
+            # Reduce stocks proportionally
+            stock_reduction = bond_increase / 2
+            modified_allocation["VTI"] = max(0.1, modified_allocation.get("VTI", 0) - stock_reduction)
+            modified_allocation["VTIAX"] = max(0.1, modified_allocation.get("VTIAX", 0) - stock_reduction)
+            
+        elif "more aggressive" in user_request or "more stocks" in user_request:
+            # Increase stock allocation
+            stock_increase = 0.15
+            modified_allocation["VTI"] = min(0.6, modified_allocation.get("VTI", 0) + stock_increase * 0.6)
+            modified_allocation["VTIAX"] = min(0.3, modified_allocation.get("VTIAX", 0) + stock_increase * 0.4)
+            # Reduce bonds
+            modified_allocation["BND"] = max(0.05, modified_allocation.get("BND", 0) - stock_increase)
+            
+        elif "more international" in user_request:
+            # Increase international allocation
+            intl_increase = 0.10
+            modified_allocation["VTIAX"] = min(0.4, modified_allocation.get("VTIAX", 0) + intl_increase * 0.7)
+            modified_allocation["VWO"] = min(0.15, modified_allocation.get("VWO", 0) + intl_increase * 0.3)
+            # Reduce domestic stocks
+            modified_allocation["VTI"] = max(0.2, modified_allocation.get("VTI", 0) - intl_increase)
+            
+        elif "less risk" in user_request or "more conservative" in user_request:
+            # Make more conservative
+            bond_increase = 0.15
+            modified_allocation["BND"] = min(0.5, modified_allocation.get("BND", 0) + bond_increase)
+            # Reduce higher-risk assets
+            modified_allocation["QQQ"] = max(0.0, modified_allocation.get("QQQ", 0) - 0.02)
+            modified_allocation["VWO"] = max(0.03, modified_allocation.get("VWO", 0) - 0.03)
+            modified_allocation["VTI"] = max(0.2, modified_allocation.get("VTI", 0) - 0.10)
+        
+        # Normalize allocations
+        total = sum(modified_allocation.values())
+        if total > 0:
+            modified_allocation = {k: v/total for k, v in modified_allocation.items()}
+        
+        # Run backtesting on modified portfolio
+        try:
+            backtest_result = self.backtesting_engine.backtest_portfolio(
+                allocation=modified_allocation,
+                start_date="2015-01-02",
+                end_date="2024-12-31",
+                initial_value=100000,
+                rebalance_frequency="monthly"
+            )
+            
+            metrics = backtest_result["performance_metrics"]
+            
+            # Generate comparison with previous recommendation
+            comparison_text = f"""🔄 **Modified Portfolio Recommendation**
+
+**Your Requested Changes Applied:**
+{self._generate_modification_explanation(user_request, base_allocation, modified_allocation)}
+
+**New Allocation:**
+"""
+            
+            for asset, weight in modified_allocation.items():
+                if weight > 0.01:
+                    asset_name = {
+                        "VTI": "US Total Stock Market",
+                        "VTIAX": "International Stocks", 
+                        "BND": "US Total Bond Market",
+                        "VNQ": "US Real Estate (REITs)",
+                        "GLD": "Gold Commodity",
+                        "VWO": "Emerging Markets",
+                        "QQQ": "Technology Growth"
+                    }.get(asset, asset)
+                    change = weight - base_allocation.get(asset, 0)
+                    change_indicator = f"↑ (+{change:.1%})" if change > 0.01 else f"↓ ({change:.1%})" if change < -0.01 else ""
+                    comparison_text += f"• {weight:.0%} - {asset_name} {change_indicator}\n"
+            
+            comparison_text += f"""
+**Updated Performance Expectations:**
+• Annual Returns: {metrics['cagr']:.1%}
+• Volatility: {metrics['volatility']:.1%}
+• Maximum Drawdown: {metrics['max_drawdown']:.1%}
+• Sharpe Ratio: {metrics['sharpe_ratio']:.2f}
+
+**Comparison to Previous:**
+• Return: {metrics['cagr']:.1%} vs {base_recommendation.get('expected_cagr', 0)*100:.1f}% ({"+" if metrics['cagr'] > base_recommendation.get('expected_cagr', 0) else ""}{(metrics['cagr'] - base_recommendation.get('expected_cagr', 0))*100:.1f}%)
+• Risk: {metrics['volatility']:.1%} vs {base_recommendation.get('expected_volatility', 0)*100:.1f}% ({"Lower" if metrics['volatility'] < base_recommendation.get('expected_volatility', 0) else "Higher"} risk)
+
+This modified allocation addresses your feedback while maintaining proper diversification.
+"""
+            
+            return {
+                "recommendation": comparison_text,
+                "allocation": modified_allocation,
+                "expected_cagr": metrics["cagr"],
+                "expected_volatility": metrics["volatility"],
+                "max_drawdown": metrics["max_drawdown"],
+                "sharpe_ratio": metrics["sharpe_ratio"],
+                "risk_profile": self._determine_risk_profile(modified_allocation),
+                "confidence_score": 0.80
+            }
+            
+        except Exception as e:
+            logger.error(f"Modified backtesting failed: {e}")
+            return base_recommendation
+    
+    def generate_risk_analysis(self, user_request: str, user_context: dict = None, previous_allocation: dict = None) -> str:
+        """
+        Generate risk analysis based on user questions and portfolio context
+        """
+        if previous_allocation is None:
+            previous_allocation = {"VTI": 0.4, "VTIAX": 0.2, "BND": 0.2, "VNQ": 0.1, "GLD": 0.05, "VWO": 0.03, "QQQ": 0.02}
+        
+        user_request = user_request.lower()
+        
+        if "how risky" in user_request or "risk level" in user_request:
+            bond_pct = previous_allocation.get("BND", 0)
+            stock_pct = previous_allocation.get("VTI", 0) + previous_allocation.get("VTIAX", 0) + previous_allocation.get("VWO", 0)
+            
+            risk_level = "Low" if bond_pct > 0.4 else "High" if stock_pct > 0.8 else "Moderate"
+            
+            return f"""📊 **Risk Analysis of Your Portfolio**
+
+**Risk Level: {risk_level}**
+
+**Portfolio Composition:**
+• Stocks: {stock_pct:.0%} (Higher risk, higher return potential)
+• Bonds: {bond_pct:.0%} (Lower risk, stability)
+• Alternatives: {(1-stock_pct-bond_pct):.0%} (Diversification)
+
+**Historical Risk Metrics:**
+• Expected volatility: 15-18% annually
+• Worst 12-month period: -25% to -35% potential loss
+• Recovery time after major crashes: 18-36 months typically
+
+**Risk Factors:**
+✅ **Diversified across asset classes** - reduces single-asset risk
+✅ **International exposure** - reduces US-only risk
+⚠️ **Stock-heavy allocation** - expect significant short-term volatility
+⚠️ **Long-term timeline recommended** - not suitable for <5 year goals
+
+Your {risk_level.lower()} risk portfolio aligns with {stock_pct:.0%} stock allocation and long-term investment approach."""
+            
+        elif "timeline" in user_request or "how long" in user_request:
+            return f"""⏰ **Timeline Risk Assessment**
+
+**Recommended Investment Horizon: 10+ Years**
+
+**By Timeline:**
+• **1-3 years**: High risk - significant loss potential, consider more bonds
+• **3-7 years**: Moderate risk - some volatility acceptable
+• **7-15 years**: Good fit - can ride out market cycles
+• **15+ years**: Ideal - maximizes compound growth potential
+
+**Your Portfolio Timeline Appropriateness:**
+Based on {previous_allocation.get('BND', 0):.0%} bonds and {(previous_allocation.get('VTI', 0) + previous_allocation.get('VTIAX', 0)):.0%} stocks:
+
+✅ **Perfect for 10+ year goals** (retirement, long-term wealth building)
+⚠️ **Not suitable for short-term needs** (house down payment, emergency fund)
+✅ **Can handle 2-3 market downturns** during typical investment period
+
+**Risk Management:**
+• Keep 3-6 months expenses in separate emergency fund
+• Don't invest money needed within 5 years in this portfolio
+• Consider more conservative allocation as you approach your goal"""
+        
+        else:
+            return self.generate_explanation(user_request, {"allocation": previous_allocation})
+    
+    def _generate_modification_explanation(self, user_request: str, original: dict, modified: dict) -> str:
+        """Generate explanation of what modifications were made"""
+        changes = []
+        
+        for asset in set(list(original.keys()) + list(modified.keys())):
+            old_weight = original.get(asset, 0)
+            new_weight = modified.get(asset, 0)
+            change = new_weight - old_weight
+            
+            if abs(change) > 0.01:  # Only show meaningful changes
+                asset_name = {
+                    "VTI": "US Stocks", "VTIAX": "International Stocks", "BND": "Bonds",
+                    "VNQ": "REITs", "GLD": "Gold", "VWO": "Emerging Markets", "QQQ": "Technology"
+                }.get(asset, asset)
+                
+                if change > 0:
+                    changes.append(f"• Increased {asset_name}: {old_weight:.0%} → {new_weight:.0%}")
+                else:
+                    changes.append(f"• Decreased {asset_name}: {old_weight:.0%} → {new_weight:.0%}")
+        
+        return "\n".join(changes) if changes else "Minor rebalancing adjustments made"
+    
+    def _determine_risk_profile(self, allocation: dict) -> str:
+        """Determine risk profile from allocation"""
+        bond_pct = allocation.get("BND", 0)
+        stock_pct = sum(allocation.get(asset, 0) for asset in ["VTI", "VTIAX", "VWO", "QQQ"])
+        
+        if bond_pct >= 0.4:
+            return "conservative"
+        elif stock_pct >= 0.75:
+            return "aggressive"
+        else:
+            return "balanced"
+    
+    def format_recommendation_response(self, recommendation: PortfolioRecommendation, conversation_context=None) -> str:
+        """Format recommendation as natural language response with conversation awareness"""
+        
+        # Add conversational context if this is a follow-up
+        context_intro = ""
+        if conversation_context and conversation_context.conversationHistory:
+            if len(conversation_context.conversationHistory) > 0:
+                context_intro = "Based on our conversation, here's my updated recommendation:\n\n"
+        
+        response = f"""{context_intro}🎯 **Portfolio Recommendation**
+
+**Allocation:**
+"""
+        
+        for asset, weight in recommendation.allocation.items():
+            if weight > 0.01:  # Only show meaningful allocations
+                asset_name = {
+                    "VTI": "US Total Stock Market",
+                    "VTIAX": "International Stocks", 
+                    "BND": "US Total Bond Market",
+                    "VNQ": "US Real Estate (REITs)",
+                    "GLD": "Gold Commodity",
+                    "VWO": "Emerging Markets",
+                    "QQQ": "Technology Growth"
+                }.get(asset, asset)
+                response += f"• {weight:.0%} - {asset_name} ({asset})\n"
+        
+        response += f"""
+**Expected Performance:**
+• Annual Returns: {recommendation.expected_cagr:.1%}
+• Volatility: {recommendation.expected_volatility:.1%}
+• Maximum Drawdown: {recommendation.max_drawdown:.1%}
+• Sharpe Ratio: {recommendation.sharpe_ratio:.2f}
+
+**Analysis:**
+{recommendation.reasoning}
+
+**Risk Profile:** {recommendation.risk_profile.value.title()}
+**Confidence:** {recommendation.confidence_score:.0%}
+
+*Based on 20-year historical data (2004-2024). Past performance doesn't guarantee future results.*
+"""
 
 # Example usage and testing
 if __name__ == "__main__":

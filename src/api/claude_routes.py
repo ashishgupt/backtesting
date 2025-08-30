@@ -17,9 +17,17 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/chat", tags=["Claude Integration"])
 
 # Request/Response Models
+class ConversationContext(BaseModel):
+    sessionId: Optional[str] = None
+    conversationHistory: Optional[list] = []
+    userPreferences: Optional[dict] = {}
+    lastRecommendation: Optional[dict] = None
+    userProfile: Optional[dict] = {}
+    messageAnalysis: Optional[dict] = {}
+
 class ChatRequest(BaseModel):
     message: str = Field(..., description="Natural language portfolio request")
-    user_context: Optional[dict] = Field(default=None, description="Additional user context")
+    user_context: Optional[ConversationContext] = Field(default=None, description="Conversation context and user preferences")
 
 class ChatResponse(BaseModel):
     recommendation: str = Field(..., description="Natural language recommendation")
@@ -56,40 +64,161 @@ async def get_portfolio_recommendation(
     Get natural language portfolio recommendation or analysis based on user message
     
     Enhanced to handle:
-    - Portfolio recommendations
+    - Conversation context and follow-up questions
+    - Portfolio recommendations with memory of previous interactions  
     - Rebalancing strategy questions  
     - Recovery/drawdown analysis
-    - Follow-up questions
+    - Context-aware responses
     
     Examples of supported queries:
     - "I'm 35 and want a balanced portfolio for retirement"
     - "What's the best rebalancing strategy for my Roth IRA?"
     - "How long would recovery take if this portfolio dropped 30%?"
-    - "Conservative allocation with some international exposure"
+    - "What about if I increase bonds in that portfolio?" (follow-up)
+    - "Explain why you recommended that allocation" (context-aware)
     """
     try:
         logger.info(f"Processing recommendation request: {request.message}")
         
+        # Extract conversation context
+        context = request.user_context
+        message_analysis = context.messageAnalysis if context and context.messageAnalysis else {}
+        user_preferences = context.userPreferences if context else {}
+        last_recommendation = context.lastRecommendation if context else None
+        conversation_history = context.conversationHistory if context else []
+        
+        logger.info(f"Context: {len(conversation_history)} messages, follow-up: {message_analysis.get('isFollowUp', False)}")
+        
         # Get engines with proper database session
         portfolio_engine, optimization_engine, claude_advisor = get_engines(db)
         
-        # NEW: Check if this is a rebalancing or explanation question
+        # Enhanced context-aware processing
         user_message = request.message.lower()
-        is_rebalancing_question = any(word in user_message for word in [
-            "rebalancing", "rebalance", "strategy", "when to rebalance", "how often"
-        ])
-        is_explanation_question = any(word in user_message for word in [
-            "recovery", "drawdown", "underwater", "explain", "why", "how long"
-        ])
         
-        if is_rebalancing_question:
-            # Handle rebalancing strategy questions
-            rebalancing_response = claude_advisor.generate_rebalancing_recommendation(request.message)
+        # Check for follow-up questions that reference previous recommendations
+        if message_analysis.get('isFollowUp', False) and last_recommendation:
+            # Handle follow-up questions with context from previous recommendation
+            if any(word in user_message for word in ["explain", "why", "how", "tell me"]):
+                explanation = claude_advisor.generate_explanation(
+                    request.message, 
+                    previous_context=last_recommendation
+                )
+                return create_context_response(explanation, last_recommendation)
             
-            # Return a specialized response for rebalancing questions
+            elif any(word in user_message for word in ["modify", "adjust", "change", "different", "instead", "what about"]):
+                # Handle modification requests
+                modified_recommendation = claude_advisor.generate_modified_recommendation(
+                    request.message,
+                    base_recommendation=last_recommendation,
+                    user_preferences=user_preferences
+                )
+                return modified_recommendation
+        
+        # Handle different types of requests based on analysis
+        request_type = message_analysis.get('requestType', 'new_portfolio')
+        
+        if request_type == 'rebalancing':
+            rebalancing_response = claude_advisor.generate_rebalancing_recommendation(
+                request.message, 
+                portfolio_allocation=last_recommendation.get('allocation') if last_recommendation else None
+            )
+            return create_context_response(rebalancing_response, last_recommendation)
+            
+        elif request_type == 'recovery_analysis':
+            recovery_response = claude_advisor.generate_explanation(request.message, last_recommendation)
+            return create_context_response(recovery_response, last_recommendation)
+        
+        elif request_type == 'risk_analysis':
+            risk_response = claude_advisor.generate_risk_analysis(
+                request.message,
+                user_context=user_preferences,
+                previous_allocation=last_recommendation.get('allocation') if last_recommendation else None
+            )
+            return create_context_response(risk_response, last_recommendation)
+        
+        else:
+            # Generate new portfolio recommendation with conversation context
+            enhanced_message = enrich_message_with_context(
+                request.message, 
+                user_preferences, 
+                conversation_history
+            )
+            
+            recommendation = claude_advisor.generate_recommendation(enhanced_message)
+            
+            # Format natural language response with context awareness
+            formatted_response = claude_advisor.format_recommendation_response(
+                recommendation,
+                conversation_context=context
+            )
+            
             return ChatResponse(
-                recommendation=rebalancing_response,
-                allocation={"VTI": 0.40, "VTIAX": 0.20, "BND": 0.15, "VNQ": 0.10, "GLD": 0.05, "VWO": 0.07, "QQQ": 0.03},
+                recommendation=formatted_response,
+                allocation=recommendation.allocation,
+                expected_cagr=recommendation.expected_cagr,
+                expected_volatility=recommendation.expected_volatility,
+                max_drawdown=recommendation.max_drawdown,
+                sharpe_ratio=recommendation.sharpe_ratio,
+                risk_profile=recommendation.risk_profile.value,
+                confidence_score=recommendation.confidence_score
+            )
+        
+    except Exception as e:
+        logger.error(f"Recommendation generation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate recommendation: {str(e)}")
+
+def create_context_response(response_text: str, last_recommendation: dict = None) -> ChatResponse:
+    """Create a response for context-aware queries"""
+    default_allocation = {"VTI": 0.40, "VTIAX": 0.20, "BND": 0.15, "VNQ": 0.10, "GLD": 0.05, "VWO": 0.07, "QQQ": 0.03}
+    
+    if last_recommendation:
+        allocation = last_recommendation.get('allocation', default_allocation)
+        expected_cagr = last_recommendation.get('expected_cagr', 0.115)
+        expected_volatility = last_recommendation.get('expected_volatility', 0.16)
+        max_drawdown = last_recommendation.get('max_drawdown', -0.32)
+        sharpe_ratio = last_recommendation.get('sharpe_ratio', 0.68)
+        risk_profile = last_recommendation.get('risk_profile', 'balanced')
+    else:
+        allocation = default_allocation
+        expected_cagr = 0.115
+        expected_volatility = 0.16
+        max_drawdown = -0.32
+        sharpe_ratio = 0.68
+        risk_profile = 'balanced'
+    
+    return ChatResponse(
+        recommendation=response_text,
+        allocation=allocation,
+        expected_cagr=expected_cagr,
+        expected_volatility=expected_volatility,
+        max_drawdown=max_drawdown,
+        sharpe_ratio=sharpe_ratio,
+        risk_profile=risk_profile,
+        confidence_score=0.85
+    )
+
+def enrich_message_with_context(message: str, user_preferences: dict, conversation_history: list) -> str:
+    """Enrich the user message with context from previous conversations"""
+    enriched_parts = [message]
+    
+    # Add user preferences context if available
+    if user_preferences:
+        if 'riskProfile' in user_preferences:
+            enriched_parts.append(f"User prefers {user_preferences['riskProfile']} risk profile.")
+        if 'accountType' in user_preferences:
+            enriched_parts.append(f"Account type: {user_preferences['accountType']}.")
+        if 'timeline' in user_preferences:
+            enriched_parts.append(f"Investment timeline: {user_preferences['timeline']}.")
+    
+    # Add conversation context for continuity
+    if conversation_history:
+        recent_messages = conversation_history[-3:]  # Last 3 messages for context
+        context_summary = "Previous discussion context: "
+        for msg in recent_messages:
+            if msg.get('role') == 'user':
+                context_summary += f"User asked: {msg.get('content', '')[:50]}... "
+    
+    return " ".join(enriched_parts)
                 expected_cagr=0.115,
                 expected_volatility=0.16,
                 max_drawdown=-0.32,
