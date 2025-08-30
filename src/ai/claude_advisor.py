@@ -361,7 +361,7 @@ Ask me about specific aspects like rebalancing, risk management, or recovery exp
             # Generate reasoning
             reasoning = self._generate_reasoning(parsed, base_allocation, metrics)
             
-            return PortfolioRecommendation(
+            recommendation = PortfolioRecommendation(
                 allocation=base_allocation,
                 expected_cagr=metrics["cagr"],
                 expected_volatility=metrics["volatility"],
@@ -371,11 +371,13 @@ Ask me about specific aspects like rebalancing, risk management, or recovery exp
                 risk_profile=actual_risk_profile,  # Use corrected risk profile
                 confidence_score=0.85  # High confidence for tested allocations
             )
+            logger.info(f"DEBUG: About to return recommendation: {recommendation}")
+            return recommendation
             
         except Exception as e:
             logger.error(f"Backtesting failed: {e}")
             # Return a basic recommendation if backtesting fails
-            return PortfolioRecommendation(
+            fallback_recommendation = PortfolioRecommendation(
                 allocation=base_allocation,
                 expected_cagr=0.08,  # Conservative estimate
                 expected_volatility=0.15,
@@ -385,6 +387,8 @@ Ask me about specific aspects like rebalancing, risk management, or recovery exp
                 risk_profile=actual_risk_profile,  # Use corrected risk profile
                 confidence_score=0.6
             )
+            logger.info(f"DEBUG: About to return fallback recommendation: {fallback_recommendation}")
+            return fallback_recommendation
     
     def _generate_reasoning(self, parsed: Dict, allocation: Dict[str, float], metrics: Dict) -> str:
         """Generate human-readable reasoning for the recommendation"""

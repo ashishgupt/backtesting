@@ -147,17 +147,33 @@ async def get_portfolio_recommendation(
             return create_context_response(risk_response, last_recommendation)
         
         else:
-            logger.info("Processing as new portfolio recommendation request - TESTING")
-            # TEMPORARY: Return a simple hardcoded response to test if this path works
+            # Generate new portfolio recommendation with conversation context
+            enhanced_message = enrich_message_with_context(
+                request.message, 
+                user_preferences, 
+                conversation_history
+            )
+            
+            logger.info(f"Enhanced message: {enhanced_message}")
+            recommendation = claude_advisor.generate_recommendation(enhanced_message)
+            logger.info(f"Generated recommendation type: {type(recommendation)}")
+            
+            if recommendation is None:
+                logger.error("generate_recommendation returned None")
+                return create_context_response("Sorry, I couldn't generate a recommendation at this time. Please try again.", last_recommendation)
+            
+            # Format the response
+            formatted_response = f"🎯 Portfolio Recommendation: {recommendation.risk_profile.value.title()} allocation with {recommendation.expected_cagr:.1%} expected returns."
+            
             return ChatResponse(
-                recommendation="🎯 TEST: Portfolio recommendation generated successfully!",
-                allocation={"VTI": 0.35, "VTIAX": 0.20, "BND": 0.20, "VNQ": 0.10, "GLD": 0.05, "VWO": 0.07, "QQQ": 0.03},
-                expected_cagr=0.085,
-                expected_volatility=0.16,
-                max_drawdown=-0.32,
-                sharpe_ratio=0.68,
-                risk_profile="balanced",
-                confidence_score=0.85
+                recommendation=formatted_response,
+                allocation=recommendation.allocation,
+                expected_cagr=recommendation.expected_cagr,
+                expected_volatility=recommendation.expected_volatility,
+                max_drawdown=recommendation.max_drawdown,
+                sharpe_ratio=recommendation.sharpe_ratio,
+                risk_profile=recommendation.risk_profile.value,
+                confidence_score=recommendation.confidence_score
             )
         
     except Exception as e:
