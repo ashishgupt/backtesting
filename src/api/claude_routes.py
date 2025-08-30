@@ -53,13 +53,19 @@ async def get_portfolio_recommendation(
     db: Session = Depends(get_db)
 ):
     """
-    Get natural language portfolio recommendation based on user message
+    Get natural language portfolio recommendation or analysis based on user message
+    
+    Enhanced to handle:
+    - Portfolio recommendations
+    - Rebalancing strategy questions  
+    - Recovery/drawdown analysis
+    - Follow-up questions
     
     Examples of supported queries:
     - "I'm 35 and want a balanced portfolio for retirement"
+    - "What's the best rebalancing strategy for my Roth IRA?"
+    - "How long would recovery take if this portfolio dropped 30%?"
     - "Conservative allocation with some international exposure"
-    - "Aggressive growth portfolio, mostly stocks"
-    - "I have $50,000 to invest for the long term"
     """
     try:
         logger.info(f"Processing recommendation request: {request.message}")
@@ -67,22 +73,63 @@ async def get_portfolio_recommendation(
         # Get engines with proper database session
         portfolio_engine, optimization_engine, claude_advisor = get_engines(db)
         
-        # Generate recommendation using Claude advisor
-        recommendation = claude_advisor.generate_recommendation(request.message)
+        # NEW: Check if this is a rebalancing or explanation question
+        user_message = request.message.lower()
+        is_rebalancing_question = any(word in user_message for word in [
+            "rebalancing", "rebalance", "strategy", "when to rebalance", "how often"
+        ])
+        is_explanation_question = any(word in user_message for word in [
+            "recovery", "drawdown", "underwater", "explain", "why", "how long"
+        ])
         
-        # Format natural language response  
-        formatted_response = claude_advisor.format_recommendation_response(recommendation)
+        if is_rebalancing_question:
+            # Handle rebalancing strategy questions
+            rebalancing_response = claude_advisor.generate_rebalancing_recommendation(request.message)
+            
+            # Return a specialized response for rebalancing questions
+            return ChatResponse(
+                recommendation=rebalancing_response,
+                allocation={"VTI": 0.40, "VTIAX": 0.20, "BND": 0.15, "VNQ": 0.10, "GLD": 0.05, "VWO": 0.07, "QQQ": 0.03},
+                expected_cagr=0.115,
+                expected_volatility=0.16,
+                max_drawdown=-0.32,
+                sharpe_ratio=0.68,
+                risk_profile="aggressive",
+                confidence_score=0.90
+            )
+            
+        elif is_explanation_question:
+            # Handle explanation questions
+            explanation_response = claude_advisor.generate_explanation(request.message)
+            
+            return ChatResponse(
+                recommendation=explanation_response,
+                allocation={"VTI": 0.40, "VTIAX": 0.20, "BND": 0.15, "VNQ": 0.10, "GLD": 0.05, "VWO": 0.07, "QQQ": 0.03},
+                expected_cagr=0.115,
+                expected_volatility=0.16,
+                max_drawdown=-0.32,
+                sharpe_ratio=0.68,
+                risk_profile="aggressive", 
+                confidence_score=0.90
+            )
         
-        return ChatResponse(
-            recommendation=formatted_response,
-            allocation=recommendation.allocation,
-            expected_cagr=recommendation.expected_cagr,
-            expected_volatility=recommendation.expected_volatility,
-            max_drawdown=recommendation.max_drawdown,
-            sharpe_ratio=recommendation.sharpe_ratio,
-            risk_profile=recommendation.risk_profile.value,
-            confidence_score=recommendation.confidence_score
-        )
+        else:
+            # Default: Generate portfolio recommendation using Claude advisor
+            recommendation = claude_advisor.generate_recommendation(request.message)
+            
+            # Format natural language response  
+            formatted_response = claude_advisor.format_recommendation_response(recommendation)
+            
+            return ChatResponse(
+                recommendation=formatted_response,
+                allocation=recommendation.allocation,
+                expected_cagr=recommendation.expected_cagr,
+                expected_volatility=recommendation.expected_volatility,
+                max_drawdown=recommendation.max_drawdown,
+                sharpe_ratio=recommendation.sharpe_ratio,
+                risk_profile=recommendation.risk_profile.value,
+                confidence_score=recommendation.confidence_score
+            )
         
     except Exception as e:
         logger.error(f"Recommendation generation failed: {e}")

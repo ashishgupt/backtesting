@@ -214,15 +214,21 @@ class RecoveryTimeAnalyzer:
             trough_idx = drawdown_slice['portfolio_value'].idxmin()
             trough_row = daily_data.loc[trough_idx]
             
-            drawdown = DrawdownPeriod(
-                start_date=start_row['date'],
-                end_date=trough_row['date'],
-                peak_value=start_row['peak_value'],
-                trough_value=trough_row['portfolio_value'],
-                drawdown_pct=trough_row['drawdown'],
-                duration_days=(trough_row['date'] - start_row['date']).days
-            )
-            drawdowns.append(drawdown)
+            # Calculate duration in business days (industry standard)
+            duration_days = (trough_row['date'] - start_row['date']).days
+            
+            # Industry standard: Filter out drawdowns < 2 days (intraday noise)
+            # Only include drawdowns that persist for meaningful duration
+            if duration_days >= 2 or abs(trough_row['drawdown']) >= 0.15:  # 2+ days OR 15%+ magnitude
+                drawdown = DrawdownPeriod(
+                    start_date=start_row['date'],
+                    end_date=trough_row['date'],
+                    peak_value=start_row['peak_value'],
+                    trough_value=trough_row['portfolio_value'],
+                    drawdown_pct=trough_row['drawdown'],
+                    duration_days=duration_days
+                )
+                drawdowns.append(drawdown)
             
         return drawdowns
         

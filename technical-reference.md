@@ -19,8 +19,7 @@ Portfolio Backtesting System (7-Asset Universe + Complete Advanced Analytics + W
 │   ├── /api/backtest/portfolio/7-asset - Specialized 7-asset endpoint  
 │   ├── /api/optimize - Efficient frontier calculations
 │   ├── /api/chat - Claude AI portfolio advisor
-│   ├── /api/analyze/rolling-periods - ✅ Rolling period analysis
-│   ├── /api/analyze/rolling-periods/multi - ✅ Multi-period comparison
+│   ├── /api/analyze/rolling-periods - ✅ Unified rolling period analysis (single & multi-period)
 │   ├── /api/analyze/rolling-periods/compare - ✅ Portfolio ranking
 │   ├── /api/analyze/stress-test - ✅ Crisis period analysis (2008, 2020, 2022)
 │   ├── /api/analyze/recovery-analysis - ✅ Recovery time patterns
@@ -171,24 +170,21 @@ POST /api/backtest/portfolio/7-asset
 ### **🆕 Rolling Period Analysis Endpoints (Week 4):**
 ```
 POST /api/analyze/rolling-periods
-- Single period analysis (e.g., 5-year rolling windows)
-- Response: ~4.44s for 49 windows
-- Example: 5-year rolling analysis across 20-year history
-
-POST /api/analyze/rolling-periods/multi
-- Multi-period comparison (e.g., 3yr vs 5yr vs 10yr)
-- Response: ~7.46s for 2-period comparison
-- Use case: Investment horizon impact analysis
+- Unified rolling period analysis (single or multi-period)
+- Single period: period_years: [5] - 5-year rolling analysis
+- Multi-period: period_years: [3,5,10] - Compare multiple periods
+- Response: ~4.44s for single period, ~7.46s for multi-period
+- Replaces old single-period endpoint (eliminated 2024 bug)
 
 POST /api/analyze/rolling-periods/compare
 - Portfolio comparison with risk-adjusted ranking
 - Response: ~30s+ for 3 portfolios (optimization needed)
 - Ranking based on Sharpe ratio + consistency score
 
-GET /api/analyze/rolling-periods/examples
-- API documentation with example payloads
+GET /api/analyze/examples
+- API documentation with updated example payloads
 - Response: <1s
-- Essential for testing and integration
+- Shows unified endpoint structure
 ```
 
 ### **Optimization & Chat Endpoints:**

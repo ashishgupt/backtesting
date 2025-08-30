@@ -406,7 +406,13 @@ class ExtendedHistoricalAnalyzer:
             
             # Estimate dominant factor exposure (how much driven by single factor)
             eigenvalues = np.linalg.eigvals(corr_matrix.values)
-            dominant_factor_exposure = eigenvalues[0] / np.sum(eigenvalues)
+            eigensum = np.sum(eigenvalues)
+            
+            # Handle edge cases to prevent invalid float values
+            if np.isfinite(eigensum) and eigensum != 0 and len(eigenvalues) > 0:
+                dominant_factor_exposure = max(0.0, min(1.0, eigenvalues[0] / eigensum))
+            else:
+                dominant_factor_exposure = 0.5  # Default fallback
             
             correlation_periods.append(CorrelationPeriod(
                 start_date=window_start,

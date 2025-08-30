@@ -232,8 +232,8 @@ def test_rolling_analysis(allocation: Dict[str, float]):
     
     try:
         payload = {
-            "allocation": {"allocation": allocation},
-            "window_years": 3
+            "allocation": allocation,  # Fixed double nesting
+            "period_years": [3]  # Updated to array format
         }
         
         response = requests.post(
@@ -247,14 +247,16 @@ def test_rolling_analysis(allocation: Dict[str, float]):
         
         if response.status_code == 200:
             data = response.json()
-            stats = data['statistics']
+            # Extract data from new response structure
+            period_data = data['results'][3]  # Get the 3-year period data
+            stats = period_data['summary']
             
             print_success("Rolling period analysis completed")
-            print_metric("Rolling Periods", len(data['rolling_periods']))
-            print_metric("Average CAGR", f"{stats['average_cagr']*100:.1f}", "%")
+            print_metric("Rolling Periods", len(period_data['periods']))
+            print_metric("Average CAGR", f"{stats['avg_cagr']*100:.1f}", "%")
             print_metric("Consistency Score", f"{stats['consistency_score']:.3f}")
-            print_metric("Best Period CAGR", f"{stats['best_period_cagr']*100:.1f}", "%")
-            print_metric("Worst Period CAGR", f"{stats['worst_period_cagr']*100:.1f}", "%")
+            print_metric("Best Period CAGR", f"{stats['max_cagr']*100:.1f}", "%")
+            print_metric("Worst Period CAGR", f"{stats['min_cagr']*100:.1f}", "%")
             
             return data
             

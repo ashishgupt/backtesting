@@ -146,10 +146,10 @@ def main():
     print("\n" + "=" * 50)
     print("🌐 Testing API Endpoints...")
     
-    # Test 1: Single period analysis
+    # Test 1: Single period analysis (using array format)
     single_period_payload = {
         "allocation": {"VTI": 0.6, "VTIAX": 0.3, "BND": 0.1},
-        "period_years": 5,
+        "period_years": [5],  # Changed to array format
         "start_date": "2015-01-01T00:00:00Z",
         "end_date": "2024-01-01T00:00:00Z"
     }
@@ -159,15 +159,15 @@ def main():
         print("🛑 Single period analysis test failed.")
         return False
     
-    # Test 2: Multi-period analysis
+    # Test 2: Multi-period analysis (using unified endpoint)
     multi_period_payload = {
         "allocation": {"VTI": 0.7, "BND": 0.3},
-        "period_years_list": [3, 5],
+        "period_years": [3, 5],  # Changed to use unified endpoint
         "start_date": "2015-01-01T00:00:00Z",
         "end_date": "2024-01-01T00:00:00Z"
     }
     
-    result2 = test_api_endpoint("/api/analyze/rolling-periods/multi", multi_period_payload)
+    result2 = test_api_endpoint("/api/analyze/rolling-periods", multi_period_payload)  # Changed endpoint
     if "error" in result2:
         print("🛑 Multi-period analysis test failed.")
         return False
@@ -195,10 +195,10 @@ def main():
                       f"{rank_data['avg_cagr']:.1f}% CAGR, "
                       f"{rank_data['avg_sharpe']:.2f} Sharpe")
     
-    # Test 4: Examples endpoint
-    print(f"\n🔍 Testing /api/analyze/rolling-periods/examples")
+    # Test 4: Examples endpoint  
+    print(f"\n🔍 Testing /api/analyze/examples")
     try:
-        response = requests.get("http://localhost:8006/api/analyze/rolling-periods/examples")
+        response = requests.get("http://localhost:8006/api/analyze/examples")
         if response.status_code == 200:
             examples = response.json()
             print("✅ Examples endpoint working")

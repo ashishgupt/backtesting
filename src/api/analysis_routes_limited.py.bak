@@ -1,0 +1,356 @@
+"""
+Analysis Routes for Portfolio Backtesting API
+
+Advanced analytics endpoints including rolling period analysis, 
+stress testing, and risk assessment capabilities.
+"""
+
+from fastapi import APIRouter, HTTPException, Depends
+from typing import Dict, List, Optional, Any
+from datetime import datetime
+from pydantic import BaseModel, Field, validator
+
+from ..core.rolling_period_analyzer import (
+    RollingPeriodAnalyzer, 
+    RollingPeriodResult, 
+    RollingPeriodSummary
+)
+from ..core.portfolio_engine_optimized import OptimizedPortfolioEngine
+
+# Request/Response Models
+class RollingPeriodAnalysisRequest(BaseModel):
+    """Request model for rolling period analysis - supports both single and multi-period analysis"""
+    allocation: Dict[str, float] = Field(
+        ...,
+        description="Portfolio allocation (symbol -> weight)",
+        example={"VTI": 0.6, "VTIAX": 0.3, "BND": 0.1}
+    )
+    period_years: List[int] = Field(
+        ..., 
+        description="List of rolling window sizes in years (use [5] for single period)",
+        example=[3, 5, 10]
+    )
+    start_date: Optional[datetime] = Field(
+        None,
+        description="Analysis start date (ISO format)"
+    )
+    end_date: Optional[datetime] = Field(
+        None,
+        description="Analysis end date (ISO format)"
+    )
+
+    @validator('allocation')
+    def validate_allocation(cls, v):
+        total = sum(v.values())
+        if abs(total - 1.0) > 0.001:
+            raise ValueError(f"Allocation must sum to 1.0, got {total:.3f}")
+        return v
+
+    @validator('period_years')
+    def validate_periods(cls, v):
+        if len(v) > 5:
+            raise ValueError("Maximum 5 periods allowed")
+        if len(v) < 1:
+            raise ValueError("At least 1 period required")
+        for period in v:
+            if period < 1 or period > 20:
+                raise ValueError(f"Period years must be between 1 and 20, got {period}")
+        return sorted(v)
+
+
+class PortfolioComparisonRequest(BaseModel):
+    """Request model for comparing multiple portfolios with rolling analysis"""
+    portfolios: Dict[str, Dict[str, float]] = Field(
+        ...,
+        description="Named portfolios to compare",
+        example={
+            "Conservative": {"VTI": 0.3, "BND": 0.7},
+            "Aggressive": {"VTI": 0.8, "VTIAX": 0.2}
+        }
+    )
+    period_years: int = Field(5, ge=1, le=20, description="Rolling period length")
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+
+    @validator('portfolios')
+    def validate_portfolios(cls, v):
+        if len(v) < 2:
+            raise ValueError("At least 2 portfolios required for comparison")
+        if len(v) > 5:
+            raise ValueError("Maximum 5 portfolios allowed")
+        
+        for name, allocation in v.items():
+            total = sum(allocation.values())
+            if abs(total - 1.0) > 0.001:
+                raise ValueError(f"Portfolio '{name}' allocation must sum to 1.0, got {total:.3f}")
+        return v
+
+
+# Response Models
+class RollingPeriodAnalysisResponse(BaseModel):
+    """Response model for rolling period analysis - handles both single and multi-period"""
+    results: Dict[int, Dict[str, Any]] = Field(
+        description="Results keyed by period years"
+    )
+    comparative_insights: Optional[Dict[str, Any]] = Field(
+        None, 
+        description="Comparative analysis when multiple periods provided"
+    )
+    execution_time_seconds: float
+
+
+class PortfolioComparisonResponse(BaseModel):
+    """Response model for portfolio comparison"""
+    portfolio_results: Dict[str, Dict[str, Any]]
+    ranking: List[Dict[str, Any]]
+    execution_time_seconds: float
+
+
+# Dependency to get rolling period analyzer
+def get_rolling_period_analyzer() -> RollingPeriodAnalyzer:
+    """Get configured rolling period analyzer instance"""
+    try:
+        portfolio_engine = OptimizedPortfolioEngine()
+        return RollingPeriodAnalyzer(portfolio_engine)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to initialize analyzer: {str(e)}")
+
+
+# Router setup
+router = APIRouter(prefix="/api/analyze", tags=["analysis"])
+
+@router.post("/rolling-periods", response_model=RollingPeriodAnalysisResponse)
+async def analyze_rolling_periods(
+    request: RollingPeriodAnalysisRequest,
+    analyzer: RollingPeriodAnalyzer = Depends(get_rolling_period_analyzer)
+):
+    """
+    Unified rolling period analysis endpoint
+    
+    Analyze portfolio performance across rolling time windows. Supports both single-period
+    analysis (period_years: [5]) and multi-period comparison (period_years: [3, 5, 10]).
+    
+    This endpoint replaces both the old single-period and multi-period endpoints,
+    providing consistent input/output format for all rolling period analysis.
+    """
+    try:
+        start_time = datetime.now()
+        
+        results = {}
+        
+        # Analyze each requested period
+        for period_years in request.period_years:
+            periods, summary = analyzer.analyze_rolling_periods(
+                allocation=request.allocation,
+                period_years=period_years,
+                start_date=request.start_date,
+                end_date=request.end_date
+            )
+            
+            results[period_years] = {
+                "summary": {
+                    "period_years": summary.period_years,
+                    "total_windows": summary.total_windows,
+                    "avg_cagr": summary.avg_cagr,
+                    "min_cagr": summary.min_cagr,
+                    "max_cagr": summary.max_cagr,
+                    "cagr_std": summary.cagr_std,
+                    "avg_volatility": summary.avg_volatility,
+                    "avg_sharpe": summary.avg_sharpe,
+                    "avg_max_drawdown": summary.avg_max_drawdown,
+                    "consistency_score": summary.consistency_score,
+                    "worst_period": {
+                        "start_date": summary.worst_period.start_date.isoformat(),
+                        "end_date": summary.worst_period.end_date.isoformat(),
+                        "cagr": summary.worst_period.cagr,
+                        "volatility": summary.worst_period.volatility,
+                        "sharpe_ratio": summary.worst_period.sharpe_ratio,
+                        "max_drawdown": summary.worst_period.max_drawdown,
+                        "total_return": summary.worst_period.total_return
+                    },
+                    "best_period": {
+                        "start_date": summary.best_period.start_date.isoformat(),
+                        "end_date": summary.best_period.end_date.isoformat(),
+                        "cagr": summary.best_period.cagr,
+                        "volatility": summary.best_period.volatility,
+                        "sharpe_ratio": summary.best_period.sharpe_ratio,
+                        "max_drawdown": summary.best_period.max_drawdown,
+                        "total_return": summary.best_period.total_return
+                    }
+                },
+                "periods": [
+                    {
+                        "start_date": period.start_date.isoformat(),
+                        "end_date": period.end_date.isoformat(),
+                        "period_years": period.period_years,
+                        "cagr": period.cagr,
+                        "volatility": period.volatility,
+                        "sharpe_ratio": period.sharpe_ratio,
+                        "max_drawdown": period.max_drawdown,
+                        "total_return": period.total_return
+                    }
+                    for period in periods
+                ]
+            }
+        
+        execution_time = (datetime.now() - start_time).total_seconds()
+        
+        # Generate comparative insights if multiple periods
+        comparative_insights = None
+        if len(request.period_years) > 1:
+            comparative_insights = {
+                "period_comparison": {
+                    period: {
+                        "avg_cagr": results[period]["summary"]["avg_cagr"],
+                        "consistency_score": results[period]["summary"]["consistency_score"],
+                        "avg_sharpe": results[period]["summary"]["avg_sharpe"],
+                        "total_windows": results[period]["summary"]["total_windows"]
+                    }
+                    for period in request.period_years
+                },
+                "analysis_type": "multi_period" if len(request.period_years) > 1 else "single_period"
+            }
+        
+        return RollingPeriodAnalysisResponse(
+            results=results,
+            comparative_insights=comparative_insights,
+            execution_time_seconds=execution_time
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/rolling-periods/compare", response_model=PortfolioComparisonResponse)
+async def compare_portfolios_rolling(
+    request: PortfolioComparisonRequest,
+    analyzer: RollingPeriodAnalyzer = Depends(get_rolling_period_analyzer)
+):
+    """
+    Compare multiple portfolios using rolling period analysis
+    
+    Analyze and rank different portfolio allocations based on their
+    rolling period performance, consistency, and risk-adjusted returns.
+    """
+    try:
+        start_time = datetime.now()
+        
+        portfolio_results = {}
+        portfolio_scores = {}
+        
+        # Analyze each portfolio
+        for name, allocation in request.portfolios.items():
+            periods, summary = analyzer.analyze_rolling_periods(
+                allocation=allocation,
+                period_years=request.period_years,
+                start_date=request.start_date,
+                end_date=request.end_date
+            )
+            
+            portfolio_results[name] = {
+                "summary": {
+                    "period_years": summary.period_years,
+                    "total_windows": summary.total_windows,
+                    "avg_cagr": summary.avg_cagr,
+                    "min_cagr": summary.min_cagr,
+                    "max_cagr": summary.max_cagr,
+                    "cagr_std": summary.cagr_std,
+                    "avg_volatility": summary.avg_volatility,
+                    "avg_sharpe": summary.avg_sharpe,
+                    "avg_max_drawdown": summary.avg_max_drawdown,
+                    "consistency_score": summary.consistency_score
+                },
+                "periods": [
+                    {
+                        "start_date": period.start_date.isoformat(),
+                        "end_date": period.end_date.isoformat(),
+                        "period_years": period.period_years,
+                        "cagr": period.cagr,
+                        "volatility": period.volatility,
+                        "sharpe_ratio": period.sharpe_ratio,
+                        "max_drawdown": period.max_drawdown,
+                        "total_return": period.total_return
+                    }
+                    for period in periods
+                ]
+            }
+            
+            # Calculate ranking score
+            rank_score = summary.avg_sharpe * (1 - summary.consistency_score * 0.5)
+            portfolio_scores[name] = {
+                "rank_score": rank_score,
+                "avg_cagr": summary.avg_cagr,
+                "avg_sharpe": summary.avg_sharpe,
+                "consistency_score": summary.consistency_score,
+                "avg_max_drawdown": summary.avg_max_drawdown
+            }
+        
+        # Create ranking
+        ranking = []
+        for rank, (name, scores) in enumerate(
+            sorted(portfolio_scores.items(), key=lambda x: x[1]["rank_score"], reverse=True), 1
+        ):
+            ranking.append({
+                "rank": rank,
+                "portfolio_name": name,
+                "rank_score": scores["rank_score"],
+                "avg_cagr": scores["avg_cagr"],
+                "avg_sharpe": scores["avg_sharpe"],
+                "consistency_score": scores["consistency_score"],
+                "avg_max_drawdown": scores["avg_max_drawdown"]
+            })
+        
+        execution_time = (datetime.now() - start_time).total_seconds()
+        
+        return PortfolioComparisonResponse(
+            portfolio_results=portfolio_results,
+            ranking=ranking,
+            execution_time_seconds=execution_time
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/examples")
+async def get_analysis_examples():
+    """
+    Get example requests for all analysis endpoints
+    
+    Returns comprehensive examples showing how to use each endpoint
+    with realistic portfolio allocations and parameters.
+    """
+    return {
+        "rolling_period_analysis": {
+            "single_period": {
+                "endpoint": "POST /api/analyze/rolling-periods",
+                "description": "Single period rolling analysis",
+                "example_request": {
+                    "allocation": {"VTI": 0.6, "VTIAX": 0.3, "BND": 0.1},
+                    "period_years": [5],
+                    "start_date": "2010-01-01T00:00:00Z",
+                    "end_date": "2024-01-01T00:00:00Z"
+                }
+            },
+            "multi_period": {
+                "endpoint": "POST /api/analyze/rolling-periods",
+                "description": "Multi-period comparison analysis",
+                "example_request": {
+                    "allocation": {"VTI": 0.6, "VTIAX": 0.3, "BND": 0.1},
+                    "period_years": [3, 5, 10],
+                    "start_date": "2010-01-01T00:00:00Z",
+                    "end_date": "2024-01-01T00:00:00Z"
+                }
+            },
+            "portfolio_comparison": {
+                "endpoint": "POST /api/analyze/rolling-periods/compare",
+                "description": "Compare multiple portfolios",
+                "example_request": {
+                    "portfolios": {
+                        "Conservative": {"VTI": 0.3, "BND": 0.7},
+                        "Balanced": {"VTI": 0.6, "BND": 0.4},
+                        "Aggressive": {"VTI": 0.8, "VTIAX": 0.2}
+                    },
+                    "period_years": 5
+                }
+            }
+        }
+    }

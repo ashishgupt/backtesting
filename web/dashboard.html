@@ -877,7 +877,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         allocation: currentPortfolio,
-                        window_years: windowYears
+                        period_years: [windowYears]  // Updated to array format
                     })
                 });
                 
@@ -885,14 +885,17 @@
                 
                 const data = await response.json();
                 
+                // Extract data from new response structure
+                const periodData = data.results[windowYears];
+                
                 // Update metrics
-                document.getElementById('rollingAvgCAGR').textContent = `${(data.statistics.average_cagr * 100).toFixed(1)}%`;
-                document.getElementById('consistencyScore').textContent = data.statistics.consistency_score.toFixed(3);
-                document.getElementById('bestPeriod').textContent = `${(data.statistics.best_period_cagr * 100).toFixed(1)}%`;
-                document.getElementById('worstPeriod').textContent = `${(data.statistics.worst_period_cagr * 100).toFixed(1)}%`;
+                document.getElementById('rollingAvgCAGR').textContent = `${(periodData.summary.avg_cagr * 100).toFixed(1)}%`;
+                document.getElementById('consistencyScore').textContent = periodData.summary.consistency_score.toFixed(3);
+                document.getElementById('bestPeriod').textContent = `${(periodData.summary.max_cagr * 100).toFixed(1)}%`;
+                document.getElementById('worstPeriod').textContent = `${(periodData.summary.min_cagr * 100).toFixed(1)}%`;
                 
                 // Create rolling returns chart
-                createRollingChart(data);
+                createRollingChart(periodData);
                 
             } catch (error) {
                 console.error('Rolling analysis error:', error);

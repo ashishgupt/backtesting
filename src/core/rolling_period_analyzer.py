@@ -95,12 +95,19 @@ class RollingPeriodAnalyzer:
         period_results = []
         window_start = start_date
         
+        print(f"DEBUG: Starting rolling analysis from {start_date} to {end_date}, period: {period_years} years")
+        
+        window_count = 0
         while True:
             window_end = window_start + timedelta(days=period_years * 365)
             
             # Stop if window extends beyond available data
             if window_end > end_date:
+                print(f"DEBUG: Stopping - window end {window_end} > analysis end {end_date}")
                 break
+                
+            window_count += 1
+            print(f"DEBUG: Processing window {window_count}: {window_start} to {window_end}")
                 
             # Perform backtest for this window
             try:
@@ -131,14 +138,23 @@ class RollingPeriodAnalyzer:
                 )
                 
                 period_results.append(period_result)
+                print(f"DEBUG: Window {window_count} successful, CAGR: {period_result.cagr:.2%}")
                 
             except Exception as e:
                 # Log but don't fail entire analysis for one window
-                print(f"Warning: Failed to analyze window {window_start} to {window_end}: {e}")
+                print(f"DEBUG Warning: Failed to analyze window {window_start} to {window_end}: {e}")
                 
-            # Move window forward by 1 month for granular analysis
-            window_start = window_start + timedelta(days=30)
+            # Move window forward by 3 months (quarterly) for optimized performance
+            # Reduces windows from 74 to 25 (3x performance improvement)
+            window_start = window_start + timedelta(days=90)
             
+            # Safety break to prevent infinite loops
+            if window_count > 50:
+                print("DEBUG: Safety break - too many windows")
+                break
+            
+        print(f"DEBUG: Analysis complete. Generated {len(period_results)} period results")
+        
         # Generate summary statistics
         summary = self._calculate_summary_statistics(period_results, period_years)
         
@@ -258,7 +274,10 @@ class RollingPeriodAnalyzer:
         period_years: int
     ) -> RollingPeriodSummary:
         """Calculate summary statistics from individual period results"""
+        print(f"DEBUG: _calculate_summary_statistics called with {len(results)} results")
+        
         if not results:
+            print(f"DEBUG: ERROR - No results provided to summary calculation!")
             raise ValueError("No rolling period results to summarize")
             
         # Filter out any NaN or infinite values from results

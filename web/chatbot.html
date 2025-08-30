@@ -14,20 +14,16 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
         }
         
         .chat-container {
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
             width: 100%;
-            max-width: 800px;
-            height: 600px;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -36,9 +32,10 @@
         .chat-header {
             background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             color: white;
-            padding: 20px;
+            padding: 20px 30px;
             text-align: center;
             border-bottom: 1px solid rgba(255,255,255,0.1);
+            flex-shrink: 0;
         }
         
         .chat-header h1 {
@@ -55,18 +52,20 @@
         .chat-messages {
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
+            padding: 30px;
             display: flex;
             flex-direction: column;
             gap: 15px;
+            background: #f8fafc;
         }
         
         .message {
-            max-width: 80%;
-            padding: 15px 20px;
+            max-width: 85%;
+            padding: 18px 24px;
             border-radius: 20px;
-            line-height: 1.5;
+            line-height: 1.6;
             animation: slideIn 0.3s ease-out;
+            font-size: 15px;
         }
         
         .message.user {
@@ -147,9 +146,10 @@
         }
         
         .chat-input {
-            padding: 20px;
+            padding: 25px 30px;
             border-top: 1px solid #e5e7eb;
-            background: #f9fafb;
+            background: white;
+            flex-shrink: 0;
         }
         
         .input-container {
@@ -281,6 +281,8 @@
                 <h4>💡 Try asking:</h4>
                 <div class="example-queries">
                     <div class="example-query" onclick="sendExample(this)">I'm 35 and want a balanced portfolio</div>
+                    <div class="example-query" onclick="sendExample(this)">What's the best rebalancing strategy for my Roth IRA?</div>
+                    <div class="example-query" onclick="sendExample(this)">How long does recovery take after market crashes?</div>
                     <div class="example-query" onclick="sendExample(this)">Conservative allocation with bonds</div>
                     <div class="example-query" onclick="sendExample(this)">Aggressive growth for retirement</div>
                     <div class="example-query" onclick="sendExample(this)">I have $50,000 to invest long-term</div>
@@ -306,7 +308,7 @@
     </div>
 
     <script>
-        const API_BASE = 'http://127.0.0.1:8006';
+        const API_BASE = 'http://127.0.0.1:8007';
         let isLoading = false;
 
         // Auto-resize textarea
@@ -405,12 +407,16 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message assistant';
             
-            // Parse allocation data
+            // Parse allocation data - UPDATED FOR 7-ASSET SYSTEM
             const allocation = data.allocation;
             const assetNames = {
                 'VTI': 'US Total Stock Market',
                 'VTIAX': 'International Stocks', 
-                'BND': 'US Total Bond Market'
+                'BND': 'US Total Bond Market',
+                'VNQ': 'US Real Estate (REITs)',
+                'GLD': 'Gold Commodity',
+                'VWO': 'Emerging Markets',
+                'QQQ': 'Technology Growth'
             };
             
             let allocationHTML = '';
@@ -589,21 +595,36 @@
         }
         
         @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2.5rem;
+            .chat-header {
+                padding: 15px 20px;
             }
             
-            .hero p {
-                font-size: 1.1rem;
+            .chat-header h1 {
+                font-size: 20px;
             }
             
-            .features {
-                grid-template-columns: 1fr;
+            .chat-messages {
+                padding: 20px 15px;
             }
             
-            .cta-buttons {
-                flex-direction: column;
-                align-items: center;
+            .chat-input {
+                padding: 20px 15px;
+            }
+            
+            .message {
+                max-width: 90%;
+                padding: 15px 18px;
+                font-size: 14px;
+            }
+            
+            .allocation-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 10px;
+            }
+            
+            .performance-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
             }
         }
     </style>
