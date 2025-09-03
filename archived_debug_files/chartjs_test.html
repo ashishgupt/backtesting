@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart.js Test</title>
+    <script src="/static/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .chart-container {
+            width: 400px;
+            height: 400px;
+            margin: 20px auto;
+        }
+        .status {
+            background: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chart.js Pie Chart Test</h1>
+    
+    <div id="status" class="status">Loading Chart.js...</div>
+    
+    <div class="chart-container">
+        <canvas id="testChart"></canvas>
+    </div>
+
+    <script>
+        // Check Chart.js loading
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusDiv = document.getElementById('status');
+            
+            if (typeof Chart !== 'undefined') {
+                statusDiv.innerHTML = '✅ Chart.js loaded successfully! Version: ' + (Chart.version || 'unknown');
+                
+                // Create a test pie chart
+                const ctx = document.getElementById('testChart').getContext('2d');
+                const testChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Conservative', 'Balanced', 'Aggressive'],
+                        datasets: [{
+                            data: [40, 35, 25],
+                            backgroundColor: [
+                                '#4f46e5',
+                                '#7c3aed',
+                                '#059669'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    font: {
+                                        size: 14
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.label + ': ' + context.parsed + '%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                console.log('Test pie chart created successfully!', testChart);
+                
+            } else {
+                statusDiv.innerHTML = '❌ Chart.js failed to load';
+                statusDiv.style.backgroundColor = '#ffe6e6';
+            }
+        });
+        
+        window.addEventListener('load', function() {
+            console.log('Window loaded - Chart.js available:', typeof Chart !== 'undefined');
+        });
+    </script>
+</body>
+</html>

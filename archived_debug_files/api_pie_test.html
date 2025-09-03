@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Pie Chart - API Test</title>
+    <script src="/static/chart.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            padding: 2rem;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .status {
+            background: #f8fafc;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .portfolio-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .portfolio-card {
+            background: #f8fafc;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .portfolio-card.conservative {
+            border-color: #10b981;
+            background: linear-gradient(145deg, #ecfdf5 0%, #d1fae5 100%);
+        }
+        
+        .portfolio-card.balanced {
+            border-color: #3b82f6;
+            background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%);
+        }
+        
+        .portfolio-card.aggressive {
+            border-color: #ef4444;
+            background: linear-gradient(145deg, #fef2f2 0%, #fecaca 100%);
+        }
+        
+        .allocation-section h4 {
+            margin-bottom: 1rem;
+            color: #374151;
+            text-align: center;
+        }
+        
+        .pie-chart-container {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            justify-content: center;
+        }
+        
+        .pie-chart-canvas {
+            width: 180px !important;
+            height: 180px !important;
+            flex-shrink: 0;
+        }
+        
+        .chart-legend {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            margin-right: 0.5rem;
+            flex-shrink: 0;
+        }
+        
+        .legend-text {
+            color: #374151;
+            font-weight: 500;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Portfolio Pie Chart Test</h1>
+            <p>Testing pie charts with API data simulation</p>
+        </div>
+        
+        <div class="status" id="status">
+            <p>Status: Checking Chart.js...</p>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <button id="testBtn" onclick="simulateAPIResponse()">Simulate API Response & Create Charts</button>
+            <button onclick="callRealAPI()" style="margin-left: 10px;">Call Real API (Slow)</button>
+        </div>
+        
+        <div class="portfolio-cards" id="portfolioCards">
+            <!-- Cards will be generated here -->
+        </div>
+    </div>
+
+    <script>
+        // Simulate API response structure
+        const mockAPIResponse = {
+            portfolios: [
+                {
+                    strategy: "Conservative",
+                    expected_return: 0.047,
+                    volatility: 0.089,
+                    sharpe_ratio: 0.42,
+                    overall_crisis_score: 78,
+                    allocation: {
+                        "BND": 0.45,
+                        "VTI": 0.30,
+                        "VTIAX": 0.15,
+                        "VNQ": 0.05,
+                        "GLD": 0.05
+                    },
+                    target_achievement_probability: 0.72,
+                    expected_final_value: 850000,
+                    account_specific_notes: ["Prioritize bonds in taxable accounts", "Use tax-deferred for REITs"]
+                },
+                {
+                    strategy: "Balanced",
+                    expected_return: 0.135,
+                    volatility: 0.145,
+                    sharpe_ratio: 0.89,
+                    overall_crisis_score: 65,
+                    allocation: {
+                        "VTI": 0.40,
+                        "VTIAX": 0.25,
+                        "BND": 0.20,
+                        "VNQ": 0.10,
+                        "GLD": 0.05
+                    },
+                    target_achievement_probability: 0.85,
+                    expected_final_value: 1250000,
+                    account_specific_notes: ["Balance equity across accounts", "Place bonds in taxable if needed"]
+                },
+                {
+                    strategy: "Aggressive",
+                    expected_return: 0.153,
+                    volatility: 0.187,
+                    sharpe_ratio: 0.78,
+                    overall_crisis_score: 52,
+                    allocation: {
+                        "VTI": 0.45,
+                        "QQQ": 0.20,
+                        "VTIAX": 0.15,
+                        "VWO": 0.10,
+                        "VNQ": 0.06,
+                        "GLD": 0.04
+                    },
+                    target_achievement_probability: 0.91,
+                    expected_final_value: 1450000,
+                    account_specific_notes: ["Maximize growth in tax-free accounts", "Consider tax-loss harvesting"]
+                }
+            ]
+        };
+        
+        function updateStatus(message, isError = false) {
+            const status = document.getElementById('status');
+            status.innerHTML = `<p style="color: ${isError ? 'red' : 'green'};">${message}</p>`;
+        }
+        
+        function createPieChart(chartId, allocations) {
+            console.log('Creating pie chart for', chartId);
+            
+            const canvas = document.getElementById(chartId);
+            const legendContainer = document.getElementById(`${chartId}-legend`);
+            
+            if (!canvas || !legendContainer) {
+                console.error('Chart elements not found for', chartId);
+                return null;
+            }
+            
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js is not loaded');
+                legendContainer.innerHTML = '<p style="color: red;">Chart.js not loaded</p>';
+                return null;
+            }
+            
+            const colors = [
+                '#4f46e5', '#7c3aed', '#059669', '#dc2626', '#ea580c', 
+                '#0d9488', '#7c2d12', '#374151', '#be185d', '#4338ca'
+            ];
+            
+            try {
+                const chart = new Chart(canvas, {
+                    type: 'pie',
+                    data: {
+                        labels: allocations.map(([asset, _]) => asset),
+                        datasets: [{
+                            data: allocations.map(([_, weight]) => parseFloat((weight * 100).toFixed(1))),
+                            backgroundColor: colors.slice(0, allocations.length),
+                            borderColor: '#ffffff',
+                            borderWidth: 2,
+                            hoverOffset: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.label}: ${context.parsed}%`;
+                                    }
+                                }
+                            }
+                        },
+                        animation: { duration: 1000 }
+                    }
+                });
+                
+                // Create legend
+                legendContainer.innerHTML = allocations.map(([asset, weight], index) => `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: ${colors[index]}"></div>
+                        <div class="legend-text">${asset}: ${(weight * 100).toFixed(1)}%</div>
+                    </div>
+                `).join('');
+                
+                return chart;
+            } catch (error) {
+                console.error('Error creating chart:', error);
+                legendContainer.innerHTML = `<p style="color: red;">Chart error: ${error.message}</p>`;
+                return null;
+            }
+        }
+        
+        function createPortfolioCard(portfolio) {
+            const div = document.createElement('div');
+            div.className = `portfolio-card ${portfolio.strategy.toLowerCase()}`;
+            
+            const sortedAllocations = Object.entries(portfolio.allocation)
+                .filter(([_, weight]) => weight > 0.01)
+                .sort(([_, a], [__, b]) => b - a);
+            
+            const chartId = `chart-${portfolio.strategy.toLowerCase()}-${Date.now()}`;
+            
+            div.innerHTML = `
+                <h3 style="text-align: center; margin-bottom: 1rem;">${portfolio.strategy.toUpperCase()}</h3>
+                <div class="allocation-section">
+                    <h4>Top Holdings</h4>
+                    <div class="pie-chart-container">
+                        <canvas id="${chartId}" class="pie-chart-canvas"></canvas>
+                        <div class="chart-legend" id="${chartId}-legend"></div>
+                    </div>
+                </div>
+            `;
+            
+            return { div, chartId, allocations: sortedAllocations };
+        }
+        
+        function simulateAPIResponse() {
+            updateStatus('Creating pie charts from simulated data...');
+            
+            const container = document.getElementById('portfolioCards');
+            container.innerHTML = '';
+            
+            const cardData = [];
+            
+            // Create all cards first
+            mockAPIResponse.portfolios.forEach(portfolio => {
+                const { div, chartId, allocations } = createPortfolioCard(portfolio);
+                container.appendChild(div);
+                cardData.push({ chartId, allocations });
+            });
+            
+            // Then create charts with delay
+            setTimeout(() => {
+                let successCount = 0;
+                cardData.forEach(({ chartId, allocations }) => {
+                    const chart = createPieChart(chartId, allocations);
+                    if (chart) successCount++;
+                });
+                
+                updateStatus(`✅ Successfully created ${successCount}/${cardData.length} pie charts!`);
+            }, 300);
+        }
+        
+        async function callRealAPI() {
+            updateStatus('Calling real API... this may take 15+ seconds');
+            document.getElementById('testBtn').disabled = true;
+            
+            try {
+                const response = await fetch('/api/enhanced/portfolio/optimize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        account_types: {
+                            taxable: 50000,
+                            tax_deferred: 50000,
+                            tax_free: 30000
+                        },
+                        target_amount: 1000000,
+                        time_horizon: 20
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateStatus('✅ API call successful! Creating charts...');
+                    
+                    // Use the same logic but with real data
+                    const container = document.getElementById('portfolioCards');
+                    container.innerHTML = '';
+                    
+                    const cardData = [];
+                    data.portfolios.forEach(portfolio => {
+                        const { div, chartId, allocations } = createPortfolioCard(portfolio);
+                        container.appendChild(div);
+                        cardData.push({ chartId, allocations });
+                    });
+                    
+                    setTimeout(() => {
+                        let successCount = 0;
+                        cardData.forEach(({ chartId, allocations }) => {
+                            const chart = createPieChart(chartId, allocations);
+                            if (chart) successCount++;
+                        });
+                        
+                        updateStatus(`✅ Real API: Created ${successCount}/${cardData.length} pie charts!`);
+                    }, 300);
+                } else {
+                    updateStatus(`❌ API Error: ${response.status} ${response.statusText}`, true);
+                }
+            } catch (error) {
+                updateStatus(`❌ API Call failed: ${error.message}`, true);
+            } finally {
+                document.getElementById('testBtn').disabled = false;
+            }
+        }
+        
+        // Check Chart.js on load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Chart !== 'undefined') {
+                updateStatus('✅ Chart.js loaded successfully! Ready to create pie charts.');
+            } else {
+                updateStatus('❌ Chart.js failed to load from local file', true);
+            }
+        });
+    </script>
+</body>
+</html>

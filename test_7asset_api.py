@@ -13,7 +13,7 @@ import json
 from datetime import datetime
 
 # Test configuration
-API_BASE_URL = "http://127.0.0.1:8006"  # Default FastAPI port
+API_BASE_URL = "http://127.0.0.1:8007"  # Default FastAPI port
 TEST_TIMEOUT = 30
 
 def test_7_asset_api_models():

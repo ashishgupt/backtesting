@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Rebalancing Strategy Analyzer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 2rem 0;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .feature-badges {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .input-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            color: #2a5298;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 0.75rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2a5298;
+            box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
+        }
+
+        .allocation-section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 4px solid #2a5298;
+        }
+
+        .allocation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .allocation-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .allocation-item label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #2a5298;
+            margin-bottom: 0.5rem;
+        }
+
+        .allocation-item input {
+            width: 70px;
+            padding: 0.4rem;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .allocation-item small {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.8rem 2rem;
+            background: linear-gradient(45deg, #2a5298, #1e3d72);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(42, 82, 152, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(42, 82, 152, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn.secondary {
+            background: #6c757d;
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2a5298;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            border: none;
+            background: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #666;
+        }
+
+        .tab.active {
+            background: #2a5298;
+            color: white;
+            box-shadow: 0 2px 10px rgba(42, 82, 152, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+            border-left: 4px solid #6c757d;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-card h3 {
+            color: #2a5298;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .metric-card .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e3d72;
+            margin-bottom: 0.25rem;
+        }
+
+        .recommendation-card {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            padding: 1.5rem;
+            border-radius: 15px;
+            border-left: 4px solid #28a745;
+            margin-bottom: 2rem;
+        }
+
+        .recommendation-card h3 {
+            color: #155724;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .recommendation-card .method {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #155724;
+            margin-bottom: 0.5rem;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+        }
+
+        .comparison-table th {
+            background: #2a5298;
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .comparison-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 0.9rem;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .comparison-table tr.best-strategy {
+            background: rgba(40, 167, 69, 0.1);
+            font-weight: 600;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .insights-section {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 15px;
+        }
+
+        .insight-item {
+            background: white;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 10px;
+            border-left: 4px solid #2a5298;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            border-left: 4px solid #dc3545;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .allocation-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Enhanced Rebalancing Strategy Analyzer</h1>
+        <p class="subtitle">Compare rebalancing approaches with honest cost analysis - Sprint 5 Phase 7</p>
+        <div class="feature-badges">
+            <span class="badge">Tax-Aware Analysis</span>
+            <span class="badge">Transaction Costs</span>
+            <span class="badge">5 Rebalancing Methods</span>
+            <span class="badge">Walk-Forward Testing</span>
+            <span class="badge">Honest Performance</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="input-section">
+            <h2 style="color: #2a5298; margin-bottom: 25px; text-align: center;">Portfolio Configuration</h2>
+            
+            <div class="input-grid">
+                <div class="form-group">
+                    <label for="initialValue">Initial Investment</label>
+                    <input type="number" id="initialValue" value="100000" min="1000" step="1000">
+                </div>
+                
+                <div class="form-group">
+                    <label for="annualContribution">Annual Contribution</label>
+                    <input type="number" id="annualContribution" value="12000" min="0" step="1000">
+                </div>
+                
+                <div class="form-group">
+                    <label for="accountType">Account Type</label>
+                    <select id="accountType">
+                        <option value="taxable">Taxable Investment Account</option>
+                        <option value="tax_deferred">Tax-Deferred (401k, Traditional IRA)</option>
+                        <option value="tax_free">Tax-Free (Roth IRA, Roth 401k)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="analysisType">Analysis Type</label>
+                    <select id="analysisType">
+                        <option value="compare">Compare All Methods</option>
+                        <option value="single">Single Method Analysis</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group" id="singleMethodGroup" style="display: none;">
+                <label for="singleMethod">Rebalancing Method</label>
+                <select id="singleMethod">
+                    <option value="quarterly">Quarterly Rebalancing</option>
+                    <option value="annual">Annual Rebalancing</option>
+                    <option value="5_percent_threshold">5% Threshold</option>
+                    <option value="10_percent_threshold">10% Threshold</option>
+                    <option value="new_money_only">New Money Only</option>
+                </select>
+            </div>
+
+            <div class="input-grid">
+                <div class="form-group">
+                    <label for="startDate">Analysis Start Date</label>
+                    <input type="date" id="startDate" value="2014-01-01">
+                </div>
+                
+                <div class="form-group">
+                    <label for="endDate">Analysis End Date</label>
+                    <input type="date" id="endDate" value="2024-01-01">
+                </div>
+            </div>
+
+            <div class="allocation-section">
+                <h3 style="color: #2a5298; margin-bottom: 15px; text-align: center;">Target Portfolio Allocation</h3>
+                <div class="allocation-grid">
+                    <div class="allocation-item">
+                        <label>VTI (US Total)</label>
+                        <input type="number" id="vti" value="30" min="0" max="100" step="1">
+                        <small>%</small>
+                    </div>
+                    <div class="allocation-item">
+                        <label>VTIAX (Intl)</label>
+                        <input type="number" id="vtiax" value="20" min="0" max="100" step="1">
+                        <small>%</small>
+                    </div>
+                    <div class="allocation-item">
+                        <label>BND (Bonds)</label>
+                        <input type="number" id="bnd" value="25" min="0" max="100" step="1">
+                        <small>%</small>
+                    </div>
+                    <div class="allocation-item">
+                        <label>VNQ (Real Estate)</label>
+                        <input type="number" id="vnq" value="10" min="0" max="100" step="1">
+                        <small>%</small>
+                    </div>
+                    <div class="allocation-item">
+                        <label>GLD (Gold)</label>
+                        <input type="number" id="gld" value="5" min="0" max="100" step="1">
+                        <small>%</small>
+                    </div>
+                    <div class="allocation-item">
+                        <label>VWO (Emerging)</label>
+                        <input type="number" id="vwo" value="5" min="0" max="100" step="1">
+                        <small>%</small>
+                    </div>
+                    <div class="allocation-item">
+                        <label>QQQ (Tech)</label>
+                        <input type="number" id="qqq" value="5" min="0" max="100" step="1">
+                        <small>%</small>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 15px;">
+                    <span id="totalAllocation">Total: 100%</span>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn" onclick="runAnalysis()">
+                    <span id="analyzeText">Analyze Rebalancing Strategies</span>
+                </button>
+                <button class="btn secondary" onclick="resetForm()">Reset to Defaults</button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing rebalancing strategies with historical data...</p>
+            <p><small>This may take 15-30 seconds for comprehensive analysis</small></p>
+        </div>
+
+        <div class="results-section" id="results">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('overview')">Strategy Overview</button>
+                <button class="tab" onclick="showTab('comparison')">Detailed Comparison</button>
+                <button class="tab" onclick="showTab('insights')">Insights & Recommendations</button>
+            </div>
+
+            <div class="tab-content active" id="overview-tab">
+                <div class="results-grid" id="overviewResults"></div>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="tab-content" id="comparison-tab">
+                <div class="recommendation-card" id="recommendationCard" style="display: none;">
+                    <h3>Recommended Strategy</h3>
+                    <div class="method" id="recommendedMethod"></div>
+                    <p id="recommendationExplanation"></p>
+                </div>
+                
+                <table class="comparison-table" id="comparisonTable">
+                    <thead>
+                        <tr>
+                            <th>Rebalancing Method</th>
+                            <th>Annual Return</th>
+                            <th>Sharpe Ratio</th>
+                            <th>Rebalances</th>
+                            <th>Total Costs</th>
+                            <th>Cost Efficiency</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparisonBody">
+                    </tbody>
+                </table>
+                
+                <div class="chart-container">
+                    <canvas id="costChart"></canvas>
+                </div>
+            </div>
+
+            <div class="tab-content" id="insights-tab">
+                <div class="insights-section" id="insightsContent">
+                    <h4>Key Insights from Analysis</h4>
+                    <div id="insightsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentResults = null;
+        let performanceChart = null;
+        let costChart = null;
+
+        // Update total allocation as user types
+        document.querySelectorAll('.allocation-item input').forEach(input => {
+            input.addEventListener('input', updateTotalAllocation);
+        });
+
+        // Show/hide single method dropdown based on analysis type
+        document.getElementById('analysisType').addEventListener('change', function() {
+            const singleMethodGroup = document.getElementById('singleMethodGroup');
+            const analyzeText = document.getElementById('analyzeText');
+            
+            if (this.value === 'single') {
+                singleMethodGroup.style.display = 'block';
+                analyzeText.textContent = 'Analyze Single Strategy';
+            } else {
+                singleMethodGroup.style.display = 'none';
+                analyzeText.textContent = 'Analyze Rebalancing Strategies';
+            }
+        });
+
+        function updateTotalAllocation() {
+            const inputs = document.querySelectorAll('.allocation-item input');
+            let total = 0;
+            inputs.forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+            
+            const totalSpan = document.getElementById('totalAllocation');
+            totalSpan.textContent = `Total: ${total}%`;
+            totalSpan.style.color = total === 100 ? '#28a745' : (total > 105 || total < 95) ? '#dc3545' : '#ffc107';
+        }
+
+        function resetForm() {
+            document.getElementById('initialValue').value = 100000;
+            document.getElementById('annualContribution').value = 12000;
+            document.getElementById('accountType').value = 'taxable';
+            document.getElementById('analysisType').value = 'compare';
+            document.getElementById('startDate').value = '2014-01-01';
+            document.getElementById('endDate').value = '2024-01-01';
+            
+            // Reset allocation
+            document.getElementById('vti').value = 30;
+            document.getElementById('vtiax').value = 20;
+            document.getElementById('bnd').value = 25;
+            document.getElementById('vnq').value = 10;
+            document.getElementById('gld').value = 5;
+            document.getElementById('vwo').value = 5;
+            document.getElementById('qqq').value = 5;
+            
+            updateTotalAllocation();
+            document.getElementById('singleMethodGroup').style.display = 'none';
+            document.getElementById('analyzeText').textContent = 'Analyze Rebalancing Strategies';
+        }
+
+        function getTargetAllocation() {
+            return {
+                VTI: parseFloat(document.getElementById('vti').value) / 100,
+                VTIAX: parseFloat(document.getElementById('vtiax').value) / 100,
+                BND: parseFloat(document.getElementById('bnd').value) / 100,
+                VNQ: parseFloat(document.getElementById('vnq').value) / 100,
+                GLD: parseFloat(document.getElementById('gld').value) / 100,
+                VWO: parseFloat(document.getElementById('vwo').value) / 100,
+                QQQ: parseFloat(document.getElementById('qqq').value) / 100
+            };
+        }
+
+        function validateAllocation() {
+            const allocation = getTargetAllocation();
+            const total = Object.values(allocation).reduce((sum, val) => sum + val, 0);
+            return Math.abs(total - 1.0) < 0.05; // Allow 5% tolerance
+        }
+
+        async function runAnalysis() {
+            if (!validateAllocation()) {
+                alert('Portfolio allocation must sum to approximately 100%. Current total: ' + 
+                      (Object.values(getTargetAllocation()).reduce((sum, val) => sum + val, 0) * 100).toFixed(1) + '%');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const button = document.querySelector('.btn');
+            
+            // Show loading state
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            button.disabled = true;
+            
+            try {
+                const analysisType = document.getElementById('analysisType').value;
+                
+                if (analysisType === 'compare') {
+                    await runComparisonAnalysis();
+                } else {
+                    await runSingleAnalysis();
+                }
+                
+                // Show results
+                loading.style.display = 'none';
+                results.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Analysis failed:', error);
+                loading.style.display = 'none';
+                showError('Analysis failed: ' + error.message);
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function runComparisonAnalysis() {
+            const requestData = {
+                target_allocation: getTargetAllocation(),
+                account_type: document.getElementById('accountType').value,
+                start_date: document.getElementById('startDate').value,
+                end_date: document.getElementById('endDate').value,
+                initial_value: parseFloat(document.getElementById('initialValue').value),
+                annual_contribution: parseFloat(document.getElementById('annualContribution').value)
+            };
+
+            const response = await fetch('/api/rebalancing/compare-strategies', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestData)
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(`Server error: ${response.status} - ${error}`);
+            }
+
+            currentResults = await response.json();
+            displayComparisonResults();
+        }
+
+        async function runSingleAnalysis() {
+            const requestData = {
+                target_allocation: getTargetAllocation(),
+                method: document.getElementById('singleMethod').value,
+                account_type: document.getElementById('accountType').value,
+                start_date: document.getElementById('startDate').value,
+                end_date: document.getElementById('endDate').value,
+                initial_value: parseFloat(document.getElementById('initialValue').value),
+                annual_contribution: parseFloat(document.getElementById('annualContribution').value)
+            };
+
+            const response = await fetch('/api/rebalancing/analyze-strategy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestData)
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(`Server error: ${response.status} - ${error}`);
+            }
+
+            const result = await response.json();
+            currentResults = {
+                comparison_results: { [result.method]: result },
+                recommendation: { method: result.method, explanation: "Single method analysis" },
+                account_type: result.account_type,
+                analysis_period: result.analysis_period
+            };
+            
+            displayComparisonResults();
+        }
+
+        function displayComparisonResults() {
+            displayOverviewTab();
+            displayComparisonTab();
+            displayInsightsTab();
+        }
+
+        function displayOverviewTab() {
+            const overviewResults = document.getElementById('overviewResults');
+            const results = currentResults.comparison_results;
+            
+            overviewResults.innerHTML = '';
+            
+            Object.entries(results).forEach(([method, data]) => {
+                const card = document.createElement('div');
+                card.className = 'metric-card';
+                if (method === currentResults.recommendation.method) {
+                    card.style.borderLeft = '4px solid #28a745';
+                }
+                
+                card.innerHTML = `
+                    <h3>${formatMethodName(method)}</h3>
+                    <div class="value">${(data.performance.annualized_return * 100).toFixed(1)}%</div>
+                    <p>Annual Return</p>
+                    <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">
+                        <div>Sharpe: ${data.performance.sharpe_ratio.toFixed(3)}</div>
+                        <div>Rebalances: ${data.rebalancing_stats.num_rebalances}</div>
+                        <div>Total Costs: $${Math.round(data.rebalancing_stats.total_drag)}</div>
+                    </div>
+                `;
+                
+                overviewResults.appendChild(card);
+            });
+
+            // Create performance chart
+            createPerformanceChart();
+        }
+
+        function displayComparisonTab() {
+            const tbody = document.getElementById('comparisonBody');
+            const results = currentResults.comparison_results;
+            
+            tbody.innerHTML = '';
+            
+            // Show recommendation if available
+            if (currentResults.recommendation) {
+                const recommendationCard = document.getElementById('recommendationCard');
+                const recommendedMethod = document.getElementById('recommendedMethod');
+                const recommendationExplanation = document.getElementById('recommendationExplanation');
+                
+                recommendedMethod.textContent = formatMethodName(currentResults.recommendation.method);
+                recommendationExplanation.textContent = currentResults.recommendation.explanation;
+                recommendationCard.style.display = 'block';
+            }
+            
+            Object.entries(results).forEach(([method, data]) => {
+                const row = document.createElement('tr');
+                if (method === currentResults.recommendation.method) {
+                    row.className = 'best-strategy';
+                }
+                
+                row.innerHTML = `
+                    <td><strong>${formatMethodName(method)}</strong></td>
+                    <td>${(data.performance.annualized_return * 100).toFixed(1)}%</td>
+                    <td>${data.performance.sharpe_ratio.toFixed(3)}</td>
+                    <td>${data.rebalancing_stats.num_rebalances}</td>
+                    <td>$${Math.round(data.rebalancing_stats.total_drag)}</td>
+                    <td>${data.risk_metrics.cost_efficiency_ratio.toFixed(1)}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+
+            // Create cost comparison chart
+            createCostChart();
+        }
+
+        function displayInsightsTab() {
+            const insightsList = document.getElementById('insightsList');
+            const results = currentResults.comparison_results;
+            
+            insightsList.innerHTML = '';
+            
+            // Generate insights from analysis
+            const insights = generateInsights(results);
+            
+            insights.forEach(insight => {
+                const insightDiv = document.createElement('div');
+                insightDiv.className = 'insight-item';
+                insightDiv.innerHTML = `<strong>${insight.title}:</strong> ${insight.text}`;
+                insightsList.appendChild(insightDiv);
+            });
+        }
+
+        function generateInsights(results) {
+            const insights = [];
+            const methods = Object.keys(results);
+            const accountType = currentResults.account_type;
+            
+            // Find best performer
+            const bestReturn = Math.max(...Object.values(results).map(r => r.performance.annualized_return));
+            const bestMethod = Object.entries(results).find(([_, data]) => 
+                data.performance.annualized_return === bestReturn)[0];
+            
+            insights.push({
+                title: 'Best Performing Strategy',
+                text: `${formatMethodName(bestMethod)} achieved the highest return of ${(bestReturn * 100).toFixed(1)}% annually.`
+            });
+            
+            // Cost analysis
+            const costs = Object.values(results).map(r => r.rebalancing_stats.total_drag);
+            const minCost = Math.min(...costs);
+            const maxCost = Math.max(...costs);
+            
+            if (maxCost > minCost * 2) {
+                insights.push({
+                    title: 'Cost Impact',
+                    text: `Rebalancing costs varied significantly from $${Math.round(minCost)} to $${Math.round(maxCost)}, showing the importance of cost-aware strategies.`
+                });
+            }
+            
+            // Tax implications
+            if (accountType === 'taxable') {
+                const newMoneyData = results['new_money_only'];
+                if (newMoneyData && newMoneyData.rebalancing_stats.total_tax_drag === 0) {
+                    insights.push({
+                        title: 'Tax Efficiency',
+                        text: 'New money rebalancing eliminated all tax drag, making it particularly attractive for taxable accounts.'
+                    });
+                }
+            }
+            
+            // Rebalancing frequency insights
+            const rebalanceCounts = Object.entries(results).map(([method, data]) => ({
+                method,
+                count: data.rebalancing_stats.num_rebalances
+            }));
+            
+            const maxRebalances = Math.max(...rebalanceCounts.map(r => r.count));
+            const minRebalances = Math.min(...rebalanceCounts.map(r => r.count));
+            
+            if (maxRebalances > minRebalances * 3) {
+                insights.push({
+                    title: 'Rebalancing Frequency',
+                    text: `Methods ranged from ${minRebalances} to ${maxRebalances} rebalancing events over the analysis period, showing the trade-off between control and simplicity.`
+                });
+            }
+            
+            return insights;
+        }
+
+        function createPerformanceChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            if (performanceChart) {
+                performanceChart.destroy();
+            }
+            
+            const results = currentResults.comparison_results;
+            const labels = Object.keys(results).map(formatMethodName);
+            const returns = Object.values(results).map(r => (r.performance.annualized_return * 100).toFixed(1));
+            const sharpeRatios = Object.values(results).map(r => r.performance.sharpe_ratio.toFixed(3));
+            
+            performanceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Annual Return (%)',
+                        data: returns,
+                        backgroundColor: 'rgba(42, 82, 152, 0.8)',
+                        borderColor: 'rgba(42, 82, 152, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Sharpe Ratio',
+                        data: sharpeRatios,
+                        type: 'line',
+                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Annual Return (%)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Sharpe Ratio'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Performance Comparison: Returns vs Risk-Adjusted Returns'
+                        }
+                    }
+                }
+            });
+        }
+
+        function createCostChart() {
+            const ctx = document.getElementById('costChart').getContext('2d');
+            
+            if (costChart) {
+                costChart.destroy();
+            }
+            
+            const results = currentResults.comparison_results;
+            const labels = Object.keys(results).map(formatMethodName);
+            const transactionCosts = Object.values(results).map(r => Math.round(r.rebalancing_stats.total_transaction_costs));
+            const taxDrag = Object.values(results).map(r => Math.round(r.rebalancing_stats.total_tax_drag));
+            
+            costChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Transaction Costs',
+                        data: transactionCosts,
+                        backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: 'Tax Drag',
+                        data: taxDrag,
+                        backgroundColor: 'rgba(255, 159, 64, 0.8)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                        },
+                        y: {
+                            stacked: true,
+                            title: {
+                                display: true,
+                                text: 'Cost ($)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Total Costs Breakdown by Strategy'
+                        }
+                    }
+                }
+            });
+        }
+
+        function formatMethodName(method) {
+            const names = {
+                '5_percent_threshold': '5% Threshold',
+                '10_percent_threshold': '10% Threshold',
+                'quarterly': 'Quarterly',
+                'annual': 'Annual',
+                'new_money_only': 'New Money Only'
+            };
+            return names[method] || method;
+        }
+
+        function showTab(tabName) {
+            // Hide all tabs and remove active class
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Show selected tab
+            document.querySelector(`#${tabName}-tab`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function showError(message) {
+            const container = document.querySelector('.container');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `<strong>Error:</strong> ${message}`;
+            container.appendChild(errorDiv);
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 8000);
+        }
+
+        // Initialize
+        updateTotalAllocation();
+    </script>
+</body>
+</html>

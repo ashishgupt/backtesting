@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Chart Fix Test</title>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .test-container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .chart-container {
+            height: 350px;        /* Increased height for legend */
+            position: relative;
+            margin: 20px 0;
+        }
+        h1 {
+            text-align: center;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+        .description {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 30px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        .success {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .info {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Chart Fix Test</h1>
+        <p class="description">Testing the simplified tooltip and legend solution for portfolio allocation charts</p>
+        
+        <div class="status success">✅ Tooltips: Disabled (no more truncation issues)</div>
+        <div class="status success">✅ Containers: Increased size for proper legend display</div>
+        <div class="status success">✅ Legend styling: Smaller dots, larger readable text</div>
+        <div class="status info">💡 Chart proportions: Optimized for legend below chart</div>
+        
+        <div class="chart-container">
+            <canvas id="testChart"></canvas>
+        </div>
+        
+        <div class="status success">
+            <strong>Latest Fixes Applied:</strong><br>
+            1. ✅ Increased container sizes (180x200px desktop, 160x180px mobile)<br>
+            2. ✅ Optimized legend styling (smaller dots, larger text)<br>
+            3. ✅ Better layout padding for legend visibility<br>
+            4. ✅ Removed tooltip truncation completely<br>
+            5. ✅ Professional chart proportions maintained
+        </div>
+    </div>
+
+    <script>
+        // Test the exact same chart configuration we implemented
+        const testData = {
+            'BND': 0.60,    // US Bonds
+            'VTIAX': 0.165, // International Stocks  
+            'VTI': 0.135,   // US Total Market
+            'GLD': 0.10     // Gold ETF
+        };
+
+        const assetNames = {
+            'VTI': 'US Total Market',
+            'VTIAX': 'International Stocks',
+            'BND': 'US Bonds',
+            'GLD': 'Gold ETF'
+        };
+
+        const assetColors = {
+            'VTI': '#4f46e5',     // US Total Market - Indigo
+            'VTIAX': '#059669',   // International - Emerald  
+            'BND': '#dc2626',     // Bonds - Red
+            'GLD': '#eab308'      // Gold - Yellow
+        };
+
+        // Prepare chart data
+        const chartData = [];
+        const chartLabels = [];
+        const chartColors = [];
+        
+        Object.entries(testData).forEach(([asset, weight]) => {
+            if (weight > 0.001) {
+                chartData.push(weight * 100);
+                chartLabels.push(assetNames[asset] || asset);
+                chartColors.push(assetColors[asset] || '#64748b');
+            }
+        });
+
+        // Create the chart with our fixed configuration
+        const ctx = document.getElementById('testChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    data: chartData,
+                    backgroundColor: chartColors,
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: 1,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        align: 'center',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 12,
+                            font: {
+                                size: 11,
+                                family: 'Inter, system-ui, sans-serif'
+                            },
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                return data.labels.map((label, i) => ({
+                                    text: `${label}: ${data.datasets[0].data[i].toFixed(1)}%`,
+                                    fillStyle: data.datasets[0].backgroundColor[i],
+                                    strokeStyle: data.datasets[0].backgroundColor[i],
+                                    hidden: false,
+                                    index: i
+                                }));
+                            }
+                        }
+                    },
+                    tooltip: {
+                        enabled: false  // Disabled - no more truncation issues!
+                    }
+                },
+                elements: {
+                    arc: {
+                        borderWidth: 2
+                    }
+                },
+                layout: {
+                    padding: {
+                        top: 5,
+                        bottom: 10,
+                        left: 5,
+                        right: 5
+                    }
+                }
+            }
+        });
+
+        console.log('✅ Chart created successfully with fixed configuration!');
+        console.log('- Tooltips disabled (no truncation)');
+        console.log('- Legend below chart with percentages');
+        console.log('- Clean, professional appearance');
+    </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chart.js Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+</head>
+<body>
+    <h1>Chart.js Loading Test</h1>
+    <canvas id="testChart" width="400" height="400"></canvas>
+    
+    <script>
+        console.log('Starting Chart.js test...');
+        
+        // Check if Chart.js loaded
+        if (typeof Chart !== 'undefined') {
+            console.log('✅ Chart.js loaded successfully!');
+            
+            // Try to create a simple chart
+            try {
+                const ctx = document.getElementById('testChart').getContext('2d');
+                const chart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Red', 'Blue', 'Yellow'],
+                        datasets: [{
+                            data: [10, 20, 30],
+                            backgroundColor: ['#ff6384', '#36a2eb', '#ffce56']
+                        }]
+                    }
+                });
+                console.log('✅ Chart created successfully!');
+                document.body.innerHTML += '<p style="color: green;">Chart.js is working! Check above for the pie chart.</p>';
+            } catch (error) {
+                console.error('❌ Error creating chart:', error);
+                document.body.innerHTML += '<p style="color: red;">Error creating chart: ' + error.message + '</p>';
+            }
+        } else {
+            console.error('❌ Chart.js not loaded!');
+            document.body.innerHTML += '<p style="color: red;">Chart.js failed to load!</p>';
+        }
+    </script>
+</body>
+</html>

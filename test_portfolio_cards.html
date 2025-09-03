@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Portfolio Cards - Beginner Metrics</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .risk-profile {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #e2e8f0;
+            max-width: 400px;
+        }
+        
+        .allocation-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .allocation-chart-wrapper {
+            width: 150px;
+            height: 150px;
+            position: relative;
+        }
+        
+        .allocation-details {
+            flex: 1;
+        }
+        
+        .optimization-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .metric-small {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.25rem 0;
+        }
+        
+        .metric-label {
+            font-size: 0.85rem;
+            color: #4b5563;
+            font-weight: 500;
+        }
+        
+        .metric-value {
+            color: #1a202c;
+            font-weight: 600;
+        }
+        
+        .asset-breakdown {
+            margin-top: 1rem;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 1rem;
+        }
+        
+        .asset-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.25rem 0;
+            font-size: 0.85rem;
+        }
+        
+        .asset-name {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .asset-color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .asset-weight {
+            font-weight: 600;
+            color: #1a202c;
+        }
+        
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        .test-log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Portfolio Cards - Beginner Metrics Debug</h1>
+    
+    <div id="testLog" class="test-log">Test log will appear here...</div>
+    
+    <button onclick="testMetricsUpdate()">Test Metrics Update</button>
+    <button onclick="testAssetBreakdown()">Test Asset Breakdown</button>
+    <button onclick="clearLog()">Clear Log</button>
+    
+    <!-- Conservative Portfolio Card -->
+    <div class="risk-profile" data-profile="conservative">
+        <h3>🛡️ Conservative</h3>
+        <div class="allocation-container">
+            <div class="allocation-chart-wrapper">
+                <!-- Chart would go here -->
+                <div style="width: 150px; height: 150px; background: #f0f0f0; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    Chart
+                </div>
+            </div>
+            <div class="allocation-details">
+                <div class="optimization-metrics">
+                    <div class="metric-small">
+                        <span class="metric-label">💰 Expected Growth:</span>
+                        <span class="metric-value" data-field="expected_return">Loading...</span>
+                    </div>
+                    <div class="metric-small">
+                        <span class="metric-label">📊 Risk Level:</span>
+                        <span class="metric-value" data-field="risk_description">Loading...</span>
+                    </div>
+                    <div class="metric-small">
+                        <span class="metric-label">🎯 10-Year Projection:</span>
+                        <span class="metric-value" data-field="ten_year_projection">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="description">Lower volatility, steady growth. Ideal for capital preservation and near-term goals.</p>
+        <div class="asset-breakdown" data-strategy="conservative">
+            <!-- Asset allocations will be populated by updateAssetBreakdown -->
+        </div>
+    </div>
+    
+    <!-- Balanced Portfolio Card -->
+    <div class="risk-profile" data-profile="balanced">
+        <h3>⚖️ Balanced</h3>
+        <div class="allocation-container">
+            <div class="allocation-chart-wrapper">
+                <div style="width: 150px; height: 150px; background: #f0f0f0; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    Chart
+                </div>
+            </div>
+            <div class="allocation-details">
+                <div class="optimization-metrics">
+                    <div class="metric-small">
+                        <span class="metric-label">💰 Expected Growth:</span>
+                        <span class="metric-value" data-field="expected_return">Loading...</span>
+                    </div>
+                    <div class="metric-small">
+                        <span class="metric-label">📊 Risk Level:</span>
+                        <span class="metric-value" data-field="risk_description">Loading...</span>
+                    </div>
+                    <div class="metric-small">
+                        <span class="metric-label">🎯 10-Year Projection:</span>
+                        <span class="metric-value" data-field="ten_year_projection">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="description">Moderate risk and return. Good balance between growth and stability.</p>
+        <div class="asset-breakdown" data-strategy="balanced">
+            <!-- Asset allocations will be populated by updateAssetBreakdown -->
+        </div>
+    </div>
+    
+    <!-- Aggressive Portfolio Card -->
+    <div class="risk-profile" data-profile="aggressive">
+        <h3>🚀 Aggressive</h3>
+        <div class="allocation-container">
+            <div class="allocation-chart-wrapper">
+                <div style="width: 150px; height: 150px; background: #f0f0f0; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    Chart
+                </div>
+            </div>
+            <div class="allocation-details">
+                <div class="optimization-metrics">
+                    <div class="metric-small">
+                        <span class="metric-label">💰 Expected Growth:</span>
+                        <span class="metric-value" data-field="expected_return">Loading...</span>
+                    </div>
+                    <div class="metric-small">
+                        <span class="metric-label">📊 Risk Level:</span>
+                        <span class="metric-value" data-field="risk_description">Loading...</span>
+                    </div>
+                    <div class="metric-small">
+                        <span class="metric-label">🎯 10-Year Projection:</span>
+                        <span class="metric-value" data-field="ten_year_projection">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="description">Higher risk, higher potential returns. Best for long-term growth objectives.</p>
+        <div class="asset-breakdown" data-strategy="aggressive">
+            <!-- Asset allocations will be populated by updateAssetBreakdown -->
+        </div>
+    </div>
+    
+    <script>
+        let logContent = '';
+        
+        function log(message) {
+            logContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            document.getElementById('testLog').textContent = logContent;
+        }
+        
+        function clearLog() {
+            logContent = '';
+            document.getElementById('testLog').textContent = 'Test log cleared...';
+        }
+        
+        // Mock portfolio data similar to what would come from the API
+        const mockPortfolios = [
+            {
+                strategy: 'conservative',
+                expected_return: 0.047,
+                volatility: 0.11,
+                sharpe_ratio: 0.27,
+                allocation: {
+                    'VTI': 0.135,
+                    'VTIAX': 0.165,
+                    'BND': 0.60,
+                    'GLD': 0.10
+                }
+            },
+            {
+                strategy: 'balanced',
+                expected_return: 0.14,
+                volatility: 0.16,
+                sharpe_ratio: 0.77,
+                allocation: {
+                    'VTI': 0.22,
+                    'BND': 0.08,
+                    'GLD': 0.20,
+                    'QQQ': 0.50
+                }
+            },
+            {
+                strategy: 'aggressive',
+                expected_return: 0.159,
+                volatility: 0.22,
+                sharpe_ratio: 0.79,
+                allocation: {
+                    'VTI': 0.103,
+                    'BND': 0.047,
+                    'GLD': 0.15,
+                    'QQQ': 0.70
+                }
+            }
+        ];
+        
+        const assetNames = {
+            'VTI': 'US Total Market',
+            'VTIAX': 'International Stocks',
+            'BND': 'US Bonds',
+            'VNQ': 'Real Estate',
+            'GLD': 'Gold',
+            'VWO': 'Emerging Markets',
+            'QQQ': 'Technology'
+        };
+        
+        // Function from guided-dashboard.html to update card metrics
+        function updateCardMetrics(cardElement, portfolio) {
+            log('🔧 updateCardMetrics called for: ' + portfolio.strategy);
+            
+            if (!cardElement) {
+                log('❌ cardElement is null or undefined');
+                return;
+            }
+            
+            const metricsContainer = cardElement.querySelector('.optimization-metrics');
+            log('Metrics container found: ' + !!metricsContainer);
+            
+            if (metricsContainer) {
+                // Update expected return
+                const returnElement = metricsContainer.querySelector('[data-field="expected_return"]');
+                log('Return element found: ' + !!returnElement);
+                if (returnElement) {
+                    const newValue = `${(portfolio.expected_return * 100).toFixed(1)}% annually`;
+                    log('Setting return value to: ' + newValue);
+                    returnElement.textContent = newValue;
+                }
+                
+                // Update risk level with beginner-friendly description
+                const riskElement = metricsContainer.querySelector('[data-field="risk_description"]');
+                log('Risk element found: ' + !!riskElement);
+                if (riskElement) {
+                    const volatility = portfolio.volatility;
+                    let riskDescription = '';
+                    if (volatility < 0.12) {
+                        riskDescription = 'Low (Steady)';
+                    } else if (volatility < 0.20) {
+                        riskDescription = 'Medium (Some ups/downs)';
+                    } else {
+                        riskDescription = 'Higher (More volatility)';
+                    }
+                    log('Setting risk value to: ' + riskDescription);
+                    riskElement.textContent = riskDescription;
+                }
+                
+                // Update 10-year projection
+                const projectionElement = metricsContainer.querySelector('[data-field="ten_year_projection"]');
+                log('Projection element found: ' + !!projectionElement);
+                if (projectionElement) {
+                    const currentAmount = 100000;
+                    const tenYearValue = currentAmount * Math.pow(1 + portfolio.expected_return, 10);
+                    
+                    let projectionText;
+                    if (tenYearValue < 1000000) {
+                        projectionText = `$${(tenYearValue/1000).toFixed(0)}K`;
+                    } else {
+                        projectionText = `$${(tenYearValue/1000000).toFixed(1)}M`;
+                    }
+                    log('Setting projection value to: ' + projectionText + ' (' + currentAmount + ' -> ' + tenYearValue.toFixed(0) + ')');
+                    projectionElement.textContent = projectionText;
+                }
+            }
+        }
+        
+        // Function to update asset breakdown (the technical details)
+        function updateAssetBreakdown(cardElement, allocation) {
+            log('🔧 updateAssetBreakdown called');
+            
+            const breakdownContainer = cardElement.querySelector('.asset-breakdown');
+            if (!breakdownContainer) {
+                log('❌ Asset breakdown container not found');
+                return;
+            }
+
+            const assetColors = {
+                'VTI': '#4f46e5',     
+                'VTIAX': '#059669',   
+                'BND': '#dc2626',     
+                'VNQ': '#d97706',     
+                'GLD': '#eab308',     
+                'VWO': '#7c3aed',     
+                'QQQ': '#0ea5e9'      
+            };
+
+            let html = '';
+            Object.entries(allocation)
+                .filter(([asset, weight]) => weight > 0.001)
+                .sort(([,a], [,b]) => b - a) // Sort by weight descending
+                .forEach(([asset, weight]) => {
+                    html += `
+                        <div class="asset-item">
+                            <div class="asset-name">
+                                <div class="asset-color-dot" style="background-color: ${assetColors[asset] || '#64748b'}"></div>
+                                <span>${assetNames[asset] || asset}</span>
+                            </div>
+                            <div class="asset-weight">${(weight * 100).toFixed(1)}%</div>
+                        </div>
+                    `;
+                });
+            
+            log('Asset breakdown HTML generated: ' + html.replace(/\n\s+/g, ' ').substring(0, 100) + '...');
+            breakdownContainer.innerHTML = html;
+        }
+        
+        function testMetricsUpdate() {
+            log('=== TESTING METRICS UPDATE ===');
+            
+            const cards = document.querySelectorAll('.risk-profile');
+            log('Found ' + cards.length + ' portfolio cards');
+            
+            mockPortfolios.forEach((portfolio, index) => {
+                if (index < cards.length) {
+                    log('Updating card ' + index + ': ' + portfolio.strategy);
+                    updateCardMetrics(cards[index], portfolio);
+                }
+            });
+            
+            log('✅ Metrics update test completed');
+        }
+        
+        function testAssetBreakdown() {
+            log('=== TESTING ASSET BREAKDOWN ===');
+            
+            const cards = document.querySelectorAll('.risk-profile');
+            log('Found ' + cards.length + ' portfolio cards');
+            
+            mockPortfolios.forEach((portfolio, index) => {
+                if (index < cards.length) {
+                    log('Updating asset breakdown for card ' + index + ': ' + portfolio.strategy);
+                    updateAssetBreakdown(cards[index], portfolio.allocation);
+                }
+            });
+            
+            log('✅ Asset breakdown test completed');
+        }
+        
+        // Auto-run test on page load
+        setTimeout(() => {
+            log('Page loaded - running automatic test...');
+            testMetricsUpdate();
+            
+            setTimeout(() => {
+                testAssetBreakdown();
+            }, 1000);
+        }, 500);
+    </script>
+</body>
+</html>

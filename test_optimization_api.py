@@ -9,7 +9,7 @@ def test_optimization_api():
     print("🧪 Testing Portfolio Optimization API")
     print("=" * 50)
     
-    base_url = "http://127.0.0.1:8006"
+    base_url = "http://127.0.0.1:8007"
     
     # Test 1: Max Sharpe Ratio Portfolio
     print("1. Testing Max Sharpe Ratio endpoint...")

@@ -1,0 +1,42 @@
+{
+  "threshold_analysis": {
+    "allocation": {
+      "VTI": 0.6,
+      "VTIAX": 0.3,
+      "BND": 0.1
+    },
+    "strategy_type": "threshold",
+    "threshold_percentages": [
+      5,
+      10,
+      15,
+      20
+    ],
+    "account_type": "taxable",
+    "transaction_cost_pct": 0.1
+  },
+  "time_based_analysis": {
+    "allocation": {
+      "VTI": 0.6,
+      "VTIAX": 0.3,
+      "BND": 0.1
+    },
+    "strategy_type": "time_based",
+    "rebalancing_frequencies": [
+      "monthly",
+      "quarterly",
+      "annual"
+    ],
+    "account_type": "tax_deferred"
+  },
+  "new_money_analysis": {
+    "allocation": {
+      "VTI": 0.6,
+      "VTIAX": 0.3,
+      "BND": 0.1
+    },
+    "strategy_type": "new_money",
+    "monthly_contribution": 1000,
+    "account_type": "taxable"
+  }
+}

@@ -22,7 +22,7 @@ from datetime import datetime
 from typing import Dict, List, Any
 
 # API Configuration
-API_BASE = "http://127.0.0.1:8006"
+API_BASE = "http://127.0.0.1:8007"
 
 # Portfolio configurations for testing
 TEST_PORTFOLIOS = {
@@ -517,7 +517,7 @@ if __name__ == "__main__":
             if success:
                 print("\n🎉 DEMO COMPLETE - SYSTEM FULLY OPERATIONAL!")
                 print("   • Web Dashboard: file:///Users/ashish/Claude/backtesting/web/dashboard.html")
-                print("   • API Documentation: http://127.0.0.1:8006/docs")
+                print("   • API Documentation: http://127.0.0.1:8007/docs")
                 print("   • AI Chatbot: file:///Users/ashish/Claude/backtesting/web/chatbot.html")
             else:
                 print("\n⚠️  DEMO COMPLETED WITH ISSUES")

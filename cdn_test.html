@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chart.js CDN Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f1b2b6; }
+    </style>
+</head>
+<body>
+    <h1>Chart.js CDN Loading Test</h1>
+    
+    <div id="test1" class="test">
+        <h3>Test 1: cdnjs.cloudflare.com</h3>
+        <p id="result1">Loading...</p>
+        <canvas id="chart1" width="200" height="200" style="display: none;"></canvas>
+    </div>
+    
+    <div id="test2" class="test">
+        <h3>Test 2: cdn.jsdelivr.net</h3>
+        <p id="result2">Loading...</p>
+        <canvas id="chart2" width="200" height="200" style="display: none;"></canvas>
+    </div>
+    
+    <div id="test3" class="test">
+        <h3>Test 3: unpkg.com</h3>
+        <p id="result3">Loading...</p>
+        <canvas id="chart3" width="200" height="200" style="display: none;"></canvas>
+    </div>
+
+    <script>
+        const cdns = [
+            'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js',
+            'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js',
+            'https://unpkg.com/chart.js@4.4.0/dist/chart.min.js'
+        ];
+        
+        function loadScript(src, callback) {
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = () => callback(null);
+            script.onerror = () => callback(new Error('Failed to load'));
+            document.head.appendChild(script);
+        }
+        
+        function testCDN(index) {
+            const resultEl = document.getElementById(`result${index + 1}`);
+            const testEl = document.getElementById(`test${index + 1}`);
+            const canvas = document.getElementById(`chart${index + 1}`);
+            
+            loadScript(cdns[index], (error) => {
+                if (error) {
+                    resultEl.textContent = '❌ Failed to load script';
+                    testEl.className = 'test error';
+                } else if (typeof Chart !== 'undefined') {
+                    resultEl.textContent = '✅ Chart.js loaded successfully!';
+                    testEl.className = 'test success';
+                    
+                    // Try to create a simple chart
+                    try {
+                        new Chart(canvas, {
+                            type: 'pie',
+                            data: {
+                                labels: ['A', 'B', 'C'],
+                                datasets: [{
+                                    data: [1, 2, 3],
+                                    backgroundColor: ['#ff6384', '#36a2eb', '#ffce56']
+                                }]
+                            }
+                        });
+                        canvas.style.display = 'block';
+                        resultEl.textContent += ' Chart created successfully!';
+                    } catch (chartError) {
+                        resultEl.textContent += ` Chart creation error: ${chartError.message}`;
+                    }
+                } else {
+                    resultEl.textContent = '❌ Script loaded but Chart not available';
+                    testEl.className = 'test error';
+                }
+            });
+        }
+        
+        // Test each CDN with delays
+        testCDN(0);
+        setTimeout(() => testCDN(1), 2000);
+        setTimeout(() => testCDN(2), 4000);
+    </script>
+</body>
+</html>

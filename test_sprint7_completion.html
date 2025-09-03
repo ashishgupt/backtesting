@@ -1,0 +1,36 @@
+                { name: 'Crisis Periods', return: '-2.8', periods: 8, color: '#f59e0b' }
+            ];
+
+            document.getElementById('regimePerformanceDemo').innerHTML = `
+                <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h3 style="margin: 0 0 15px 0; color: #1f2937;">🌍 Performance Across Market Regimes</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                        ${regimePerformance.map(regime => `
+                            <div style="text-align: center; background: ${regime.color}; color: white; padding: 15px; border-radius: 8px;">
+                                <div style="font-size: 18px; font-weight: bold;">${regime.return}%</div>
+                                <div style="font-size: 12px; opacity: 0.9; margin: 4px 0;">${regime.name}</div>
+                                <div style="font-size: 11px; opacity: 0.8;">${regime.periods} periods</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="background: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 15px; border-radius: 8px;">
+                        <div style="font-weight: bold; color: #0c4a6e; margin-bottom: 8px;">📊 Regime Intelligence Summary</div>
+                        <div style="color: #374151; font-size: 14px; line-height: 1.5;">
+                            Balanced strategy captures strong bull market gains while maintaining reasonable downside protection. 
+                            Moderate crisis exposure balanced by superior long-term growth potential across market cycles.
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initialize all demos
+        document.addEventListener('DOMContentLoaded', function() {
+            testWalkForwardValidation();
+            testAdvancedRiskMetrics();
+            testMarketRegimeContext();
+            testRegimePerformanceAttribution();
+        });
+    </script>
+</body>
+</html>

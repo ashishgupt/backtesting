@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exact Size Match Test</title>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .portfolio-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            background: white;
+            text-align: center;
+        }
+        h1 {
+            text-align: center;
+            color: #1f2937;
+            margin-bottom: 30px;
+        }
+        h3 {
+            margin: 0 0 15px 0;
+            color: #374151;
+        }
+        
+        /* Exact same container dimensions as guided dashboard */
+        .allocation-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0 3rem 0;
+            /* Removed gray background */
+            padding: 1rem;
+            border-radius: 8px;
+            overflow: visible;
+        }
+        .allocation-chart-wrapper {
+            flex-shrink: 0;
+            width: 220px;          /* Exact match */
+            height: 220px;         /* Exact match */
+            position: relative;
+            overflow: visible;
+        }
+        
+        /* Exact same legend CSS as guided dashboard */
+        .chart-legend {
+            margin-top: 12px;
+            margin-bottom: 20px;       /* Increased spacing after legends */
+            font-size: 11px;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        .legend-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 2px;
+            margin: 1px 0;
+        }
+        .legend-label {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+        }
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+            flex-shrink: 0;
+        }
+        .legend-name {
+            color: #374151;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .legend-percentage {
+            color: #6b7280;
+            font-weight: 600;
+            margin-left: 6px;
+            flex-shrink: 0;
+        }
+        
+        .description {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin: 1.5rem 0;
+        }
+        
+        .success {
+            background: #dcfce7;
+            color: #166534;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="test-container">
+        <h1>✅ Exact Size Match Test - 220px Containers</h1>
+        
+        <div class="success">
+            <strong>Testing:</strong> Same 220x220px containers as guided dashboard<br>
+            <strong>Goal:</strong> Verify no overlap and proper legend spacing
+        </div>
+        
+        <div class="portfolio-grid">
+            <div class="portfolio-card">
+                <h3>Conservative</h3>
+                <div class="allocation-container">
+                    <div class="allocation-chart-wrapper">
+                        <canvas id="conservativeChart"></canvas>
+                        <div class="chart-legend" id="conservativeLegend"></div>
+                    </div>
+                </div>
+                <p class="description">
+                    Lower volatility, steady growth. Ideal for capital preservation and near-term goals.
+                </p>
+                <div style="background: #f8fafc; padding: 10px; border-radius: 6px;">
+                    <strong>Expected Growth:</strong> 4.7% annually
+                </div>
+            </div>
+            
+            <div class="portfolio-card">
+                <h3>Aggressive</h3>
+                <div class="allocation-container">
+                    <div class="allocation-chart-wrapper">
+                        <canvas id="aggressiveChart"></canvas>
+                        <div class="chart-legend" id="aggressiveLegend"></div>
+                    </div>
+                </div>
+                <p class="description">
+                    Higher risk, higher potential returns. Best for long-term growth objectives.
+                </p>
+                <div style="background: #f8fafc; padding: 10px; border-radius: 6px;">
+                    <strong>Expected Growth:</strong> 15.9% annually
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Asset names and colors (exact same as guided dashboard)
+        const assetNames = {
+            'VTI': 'US Total Market',
+            'VTIAX': 'International Stocks',
+            'BND': 'US Bonds',
+            'GLD': 'Gold ETF',
+            'QQQ': 'Technology (NASDAQ)'
+        };
+
+        const assetColors = {
+            'VTI': '#4f46e5',     
+            'VTIAX': '#059669',   
+            'BND': '#dc2626',     
+            'GLD': '#eab308',     
+            'QQQ': '#0ea5e9'      
+        };
+
+        // Portfolio data (matching guided dashboard)
+        const portfolios = {
+            conservative: {
+                'BND': 0.60,    // US Bonds
+                'VTIAX': 0.165, // International Stocks  
+                'VTI': 0.135,   // US Total Market
+                'GLD': 0.10     // Gold ETF
+            },
+            aggressive: {
+                'QQQ': 0.70,    // Technology (NASDAQ)
+                'GLD': 0.15,    // Gold ETF
+                'VTI': 0.103,   // US Total Market  
+                'BND': 0.047    // US Bonds
+            }
+        };
+
+        // Exact same chart creation function as guided dashboard
+        function createPortfolioChart(canvasId, legendId, allocation) {
+            const chartData = [];
+            const chartLabels = [];
+            const chartColors = [];
+            
+            Object.entries(allocation).forEach(([asset, weight]) => {
+                if (weight > 0.001) {
+                    chartData.push(weight * 100);
+                    chartLabels.push(assetNames[asset] || asset);
+                    chartColors.push(assetColors[asset] || '#64748b');
+                }
+            });
+
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        data: chartData,
+                        backgroundColor: chartColors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    elements: { arc: { borderWidth: 2 } },
+                    layout: { padding: { top: 10, bottom: 5, left: 5, right: 5 } }
+                }
+            });
+
+            createCustomLegend(legendId, allocation);
+        }
+
+        function createCustomLegend(legendId, allocation) {
+            const legendContainer = document.getElementById(legendId);
+            
+            let legendHTML = '';
+            const validAssets = Object.entries(allocation)
+                .filter(([asset, weight]) => weight > 0.001)
+                .sort(([,a], [,b]) => b - a);
+
+            validAssets.forEach(([asset, weight]) => {
+                const color = assetColors[asset] || '#64748b';
+                const name = assetNames[asset] || asset;
+                const percentage = (weight * 100).toFixed(1) + '%';
+                
+                legendHTML += `
+                    <div class="legend-item">
+                        <div class="legend-label">
+                            <div class="legend-dot" style="background-color: ${color};"></div>
+                            <span class="legend-name">${name}</span>
+                        </div>
+                        <span class="legend-percentage">${percentage}</span>
+                    </div>
+                `;
+            });
+
+            legendContainer.innerHTML = legendHTML;
+        }
+
+        // Initialize charts
+        createPortfolioChart('conservativeChart', 'conservativeLegend', portfolios.conservative);
+        createPortfolioChart('aggressiveChart', 'aggressiveLegend', portfolios.aggressive);
+
+        console.log('✅ Exact size match test complete!');
+        console.log('- Container: 220x220px (matches guided dashboard)');
+        console.log('- Legend spacing: 3rem bottom margin + 1.5rem description margin');
+        console.log('- Should show no overlap and proper text fitting');
+    </script>
+</body>
+</html>

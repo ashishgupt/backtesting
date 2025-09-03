@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart.js Pie Chart Test - Hardcoded Data</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #4f46e5;
+            margin-bottom: 30px;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .chart-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .status.error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        
+        .legend-custom {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Chart.js Pie Chart Test</h1>
+        
+        <div id="status" class="status">
+            Loading Chart.js...
+        </div>
+        
+        <div class="charts-grid">
+            <!-- Portfolio Strategy 1: Conservative -->
+            <div class="chart-card">
+                <h3 class="chart-title">Conservative Portfolio</h3>
+                <div class="chart-container">
+                    <canvas id="conservativeChart"></canvas>
+                </div>
+                <div id="conservative-legend" class="legend-custom"></div>
+            </div>
+            
+            <!-- Portfolio Strategy 2: Balanced -->
+            <div class="chart-card">
+                <h3 class="chart-title">Balanced Portfolio</h3>
+                <div class="chart-container">
+                    <canvas id="balancedChart"></canvas>
+                </div>
+                <div id="balanced-legend" class="legend-custom"></div>
+            </div>
+            
+            <!-- Portfolio Strategy 3: Aggressive -->
+            <div class="chart-card">
+                <h3 class="chart-title">Aggressive Portfolio</h3>
+                <div class="chart-container">
+                    <canvas id="aggressiveChart"></canvas>
+                </div>
+                <div id="aggressive-legend" class="legend-custom"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script placement: Before closing body tag (research-proven solution) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script>
+        // Hardcoded portfolio data
+        const portfolioData = {
+            conservative: {
+                title: 'Conservative Portfolio',
+                allocations: [
+                    ['BND (Bonds)', 0.45],
+                    ['VTI (US Stocks)', 0.25],
+                    ['VTIAX (Intl Stocks)', 0.15],
+                    ['GLD (Gold)', 0.10],
+                    ['VNQ (REITs)', 0.05]
+                ]
+            },
+            balanced: {
+                title: 'Balanced Portfolio', 
+                allocations: [
+                    ['VTI (US Stocks)', 0.35],
+                    ['BND (Bonds)', 0.30],
+                    ['VTIAX (Intl Stocks)', 0.20],
+                    ['VNQ (REITs)', 0.10],
+                    ['GLD (Gold)', 0.05]
+                ]
+            },
+            aggressive: {
+                title: 'Aggressive Portfolio',
+                allocations: [
+                    ['VTI (US Stocks)', 0.40],
+                    ['QQQ (Tech Stocks)', 0.25],
+                    ['VTIAX (Intl Stocks)', 0.20],
+                    ['VWO (Emerging)', 0.10],
+                    ['VNQ (REITs)', 0.05]
+                ]
+            }
+        };
+        
+        // Chart colors
+        const colors = [
+            '#4f46e5', '#7c3aed', '#059669', '#dc2626', '#ea580c',
+            '#0d9488', '#7c2d12', '#374151', '#be185d', '#4338ca'
+        ];
+        
+        // Enhanced Chart.js loading check (research-proven pattern)
+        function initializeCharts() {
+            const statusDiv = document.getElementById('status');
+            
+            if (typeof Chart !== 'undefined') {
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = '✅ Chart.js loaded successfully! Version: ' + (Chart.version || 'unknown');
+                
+                // Create all three pie charts
+                createPieChart('conservativeChart', portfolioData.conservative, 'conservative-legend');
+                createPieChart('balancedChart', portfolioData.balanced, 'balanced-legend');
+                createPieChart('aggressiveChart', portfolioData.aggressive, 'aggressive-legend');
+                
+            } else {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = '❌ Chart.js failed to load - check console for errors';
+                console.error('Chart.js is not available');
+            }
+        }
+        
+        // Create pie chart function
+        function createPieChart(canvasId, data, legendId) {
+            console.log(`Creating chart: ${canvasId} with ${data.allocations.length} allocations`);
+            
+            const canvas = document.getElementById(canvasId);
+            const legendDiv = document.getElementById(legendId);
+            
+            if (!canvas || !legendDiv) {
+                console.error('Canvas or legend not found:', canvasId);
+                return;
+            }
+            
+            try {
+                // Create Chart.js pie chart
+                new Chart(canvas, {
+                    type: 'pie',
+                    data: {
+                        labels: data.allocations.map(([asset, _]) => asset),
+                        datasets: [{
+                            data: data.allocations.map(([_, weight]) => (weight * 100).toFixed(1)),
+                            backgroundColor: colors.slice(0, data.allocations.length),
+                            borderColor: '#ffffff',
+                            borderWidth: 2,
+                            hoverBorderWidth: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { 
+                                display: false  // We'll create custom legend
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.label}: ${context.parsed}%`;
+                                    }
+                                },
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: '#4f46e5',
+                                borderWidth: 1
+                            }
+                        },
+                        hover: {
+                            animationDuration: 200
+                        },
+                        animation: {
+                            animateScale: true,
+                            animateRotate: true
+                        }
+                    }
+                });
+                
+                // Create custom legend
+                legendDiv.innerHTML = data.allocations.map(([asset, weight], index) => `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: ${colors[index]}"></div>
+                        <div class="legend-text">${asset}: ${(weight * 100).toFixed(1)}%</div>
+                    </div>
+                `).join('');
+                
+                console.log(`✅ Chart created successfully: ${canvasId}`);
+                
+            } catch (error) {
+                console.error(`❌ Error creating chart ${canvasId}:`, error);
+                legendDiv.innerHTML = `<p style="color: red; font-size: 0.9rem;">Chart error: ${error.message}</p>`;
+            }
+        }
+        
+        // DOM ready check with race condition handling (research-proven pattern)
+        if (document.readyState === "loading") {
+            // DOM still loading
+            document.addEventListener('DOMContentLoaded', initializeCharts);
+        } else {
+            // DOM already loaded
+            initializeCharts();
+        }
+        
+        // Additional load event for debugging
+        window.addEventListener('load', function() {
+            console.log('Window fully loaded - Chart.js available:', typeof Chart !== 'undefined');
+        });
+        
+        // Debug information
+        console.log('Script executed - document.readyState:', document.readyState);
+        console.log('Chart.js available at script execution:', typeof Chart !== 'undefined');
+    </script>
+</body>
+</html>

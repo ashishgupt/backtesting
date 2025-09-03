@@ -10,7 +10,7 @@ def test_claude_integration():
     print("🤖 Testing Claude Portfolio Advisor Integration")
     print("=" * 55)
     
-    base_url = "http://127.0.0.1:8006"
+    base_url = "http://127.0.0.1:8007"
     
     # Test 1: Example queries endpoint
     print("1️⃣  EXAMPLE QUERIES")

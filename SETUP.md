@@ -16,7 +16,7 @@ docker-compose up -d
 
 ### 2. Verify Health  
 ```bash
-curl http://localhost:8006/health
+curl http://localhost:8007/health
 # Expected: {"status":"healthy","database":"connected","timestamp":"..."}
 ```
 
@@ -32,7 +32,7 @@ open web/dashboard.html
 open web/chatbot.html
 
 # API Documentation
-open http://localhost:8006/docs
+open http://localhost:8007/docs
 ```
 
 ### 4. Test Advanced Analytics
@@ -61,9 +61,9 @@ python3 FINAL_DEMO_WEEK8.py
 - **Performance**: Optimized with proper indexing for sub-second queries
 
 ### **Port Configuration**
-- **API Server**: http://localhost:8006
-- **API Documentation**: http://localhost:8006/docs
-- **Health Check**: http://localhost:8006/health
+- **API Server**: http://localhost:8007
+- **API Documentation**: http://localhost:8007/docs
+- **Health Check**: http://localhost:8007/health
 - **Web Interface**: File-based (web/index.html, web/dashboard.html, web/chatbot.html)
 
 ### **Asset Universe (7-Asset Diversification)**
@@ -186,7 +186,7 @@ python3 test_claude_integration.py
 
 ### **Advanced 7-Asset Portfolio Backtesting**
 ```bash
-curl -X POST http://localhost:8006/api/backtest/portfolio \
+curl -X POST http://localhost:8007/api/backtest/portfolio \
   -H "Content-Type: application/json" \
   -d '{
     "allocation": {
@@ -203,7 +203,7 @@ curl -X POST http://localhost:8006/api/backtest/portfolio \
 
 ### **Crisis Period Stress Testing**
 ```bash
-curl -X POST http://localhost:8006/api/analyze/stress-test \
+curl -X POST http://localhost:8007/api/analyze/stress-test \
   -H "Content-Type: application/json" \
   -d '{
     "allocation": {"allocation": {"VTI": 0.6, "VTIAX": 0.3, "BND": 0.1}},
@@ -213,14 +213,14 @@ curl -X POST http://localhost:8006/api/analyze/stress-test \
 
 ### **AI Portfolio Recommendations**
 ```bash
-curl -X POST http://localhost:8006/api/chat/recommend \
+curl -X POST http://localhost:8007/api/chat/recommend \
   -H "Content-Type: application/json" \
   -d '{"message": "I am 35 years old and want a balanced portfolio for retirement in 30 years"}'
 ```
 
 ### **Extended Historical Analysis**
 ```bash
-curl -X POST http://localhost:8006/api/analyze/extended-historical \
+curl -X POST http://localhost:8007/api/analyze/extended-historical \
   -H "Content-Type: application/json" \
   -d '{
     "allocation": {"allocation": {"VTI": 0.6, "VTIAX": 0.3, "BND": 0.1}},

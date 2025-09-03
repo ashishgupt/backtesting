@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Beginner Metrics</title>
+    <style>
+        .metric-small {
+            margin: 5px 0;
+            padding: 5px;
+            border: 1px solid #ccc;
+        }
+        .metric-label {
+            font-weight: bold;
+        }
+        .metric-value {
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+    <h1>Debug Beginner-Friendly Metrics</h1>
+    
+    <h2>Conservative Portfolio</h2>
+    <div class="optimization-metrics">
+        <div class="metric-small">
+            <span class="metric-label">💰 Expected Growth:</span>
+            <span class="metric-value" data-field="expected_return">Loading...</span>
+        </div>
+        <div class="metric-small">
+            <span class="metric-label">📊 Risk Level:</span>
+            <span class="metric-value" data-field="risk_description">Loading...</span>
+        </div>
+        <div class="metric-small">
+            <span class="metric-label">🎯 10-Year Projection:</span>
+            <span class="metric-value" data-field="ten_year_projection">Loading...</span>
+        </div>
+    </div>
+    
+    <h2>Balanced Portfolio</h2>
+    <div class="optimization-metrics">
+        <div class="metric-small">
+            <span class="metric-label">💰 Expected Growth:</span>
+            <span class="metric-value" data-field="expected_return">Loading...</span>
+        </div>
+        <div class="metric-small">
+            <span class="metric-label">📊 Risk Level:</span>
+            <span class="metric-value" data-field="risk_description">Loading...</span>
+        </div>
+        <div class="metric-small">
+            <span class="metric-label">🎯 10-Year Projection:</span>
+            <span class="metric-value" data-field="ten_year_projection">Loading...</span>
+        </div>
+    </div>
+    
+    <h2>Aggressive Portfolio</h2>
+    <div class="optimization-metrics">
+        <div class="metric-small">
+            <span class="metric-label">💰 Expected Growth:</span>
+            <span class="metric-value" data-field="expected_return">Loading...</span>
+        </div>
+        <div class="metric-small">
+            <span class="metric-label">📊 Risk Level:</span>
+            <span class="metric-value" data-field="risk_description">Loading...</span>
+        </div>
+        <div class="metric-small">
+            <span class="metric-label">🎯 10-Year Projection:</span>
+            <span class="metric-value" data-field="ten_year_projection">Loading...</span>
+        </div>
+    </div>
+    
+    <button onclick="testBeginnerFriendlyMetrics()">Test Update Metrics</button>
+    <button onclick="testUpdateCardMetrics()">Test Individual Card Metrics</button>
+    
+    <script>
+        // Test function similar to the one in guided-dashboard.html
+        function testBeginnerFriendlyMetrics() {
+            console.log('=== TESTING BEGINNER METRICS ===');
+            
+            // Find all elements
+            const returnElements = document.querySelectorAll('[data-field="expected_return"]');
+            const riskElements = document.querySelectorAll('[data-field="risk_description"]');  
+            const projectionElements = document.querySelectorAll('[data-field="ten_year_projection"]');
+            
+            console.log(`Found ${returnElements.length} return elements`);
+            console.log(`Found ${riskElements.length} risk elements`);
+            console.log(`Found ${projectionElements.length} projection elements`);
+            
+            // Force update ALL elements with test data
+            returnElements.forEach((el, i) => {
+                if (i === 0) el.textContent = '4.7% annually';
+                if (i === 1) el.textContent = '14.0% annually';  
+                if (i === 2) el.textContent = '15.9% annually';
+                console.log(`Updated return element ${i}: ${el.textContent}`);
+            });
+            
+            riskElements.forEach((el, i) => {
+                if (i === 0) el.textContent = 'Low (Steady)';
+                if (i === 1) el.textContent = 'Medium (Some ups/downs)';
+                if (i === 2) el.textContent = 'Higher (More volatility)';
+                console.log(`Updated risk element ${i}: ${el.textContent}`);
+            });
+            
+            projectionElements.forEach((el, i) => {
+                if (i === 0) el.textContent = '$150K';
+                if (i === 1) el.textContent = '$400K';
+                if (i === 2) el.textContent = '$430K';
+                console.log(`Updated projection element ${i}: ${el.textContent}`);
+            });
+            
+            console.log('🎯 Forced all beginner-friendly metrics update');
+        }
+        
+        // Test the updateCardMetrics function from guided-dashboard.html
+        function testUpdateCardMetrics() {
+            console.log('=== TESTING UPDATE CARD METRICS ===');
+            
+            // Mock portfolio data
+            const mockPortfolios = [
+                {
+                    strategy: 'conservative',
+                    expected_return: 0.047,
+                    volatility: 0.11,
+                    sharpe_ratio: 0.27
+                },
+                {
+                    strategy: 'balanced',
+                    expected_return: 0.14,
+                    volatility: 0.16,
+                    sharpe_ratio: 0.77
+                },
+                {
+                    strategy: 'aggressive',
+                    expected_return: 0.159,
+                    volatility: 0.22,
+                    sharpe_ratio: 0.79
+                }
+            ];
+            
+            // Test each card
+            mockPortfolios.forEach((portfolio, index) => {
+                console.log(`Testing portfolio ${index}: ${portfolio.strategy}`);
+                updateCardMetrics(document.querySelectorAll('.optimization-metrics')[index], portfolio);
+            });
+        }
+        
+        // updateCardMetrics function from guided-dashboard.html
+        function updateCardMetrics(cardElement, portfolio) {
+            console.log('🔧 updateCardMetrics called for:', portfolio.strategy, portfolio);
+            
+            if (!cardElement) {
+                console.error('❌ cardElement is null or undefined');
+                return;
+            }
+            
+            // Update expected return (with emoji for better UX)
+            const returnElement = cardElement.querySelector('[data-field="expected_return"]');
+            console.log('Return element found:', !!returnElement);
+            if (returnElement) {
+                const newValue = `${(portfolio.expected_return * 100).toFixed(1)}% annually`;
+                console.log('Setting return value to:', newValue);
+                returnElement.textContent = newValue;
+            }
+            
+            // Update risk level with beginner-friendly description
+            const riskElement = cardElement.querySelector('[data-field="risk_description"]');
+            console.log('Risk element found:', !!riskElement);
+            if (riskElement) {
+                const volatility = portfolio.volatility;
+                let riskDescription = '';
+                if (volatility < 0.12) {
+                    riskDescription = 'Low (Steady)';
+                } else if (volatility < 0.20) {
+                    riskDescription = 'Medium (Some ups/downs)';
+                } else {
+                    riskDescription = 'Higher (More volatility)';
+                }
+                console.log('Setting risk value to:', riskDescription);
+                riskElement.textContent = riskDescription;
+            }
+            
+            // Update 10-year projection based on compound growth
+            const projectionElement = cardElement.querySelector('[data-field="ten_year_projection"]');
+            console.log('Projection element found:', !!projectionElement);
+            if (projectionElement) {
+                // Use a default investment amount of $100k
+                const currentAmount = 100000;
+                const tenYearValue = currentAmount * Math.pow(1 + portfolio.expected_return, 10);
+                
+                let projectionText;
+                if (tenYearValue < 1000000) {
+                    projectionText = `$${(tenYearValue/1000).toFixed(0)}K`;
+                } else {
+                    projectionText = `$${(tenYearValue/1000000).toFixed(1)}M`;
+                }
+                console.log('Setting projection value to:', projectionText, `(${currentAmount} -> ${tenYearValue})`);
+                projectionElement.textContent = projectionText;
+            }
+        }
+        
+        // Auto-test when page loads
+        setTimeout(() => {
+            console.log('Page loaded, running auto-test...');
+            testBeginnerFriendlyMetrics();
+        }, 1000);
+    </script>
+</body>
+</html>

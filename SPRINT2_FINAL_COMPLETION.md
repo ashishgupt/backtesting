@@ -147,14 +147,14 @@ Portfolio Backtesting PoC - Week 8 Integration Complete
 ## 🎯 PRODUCTION READINESS STATUS
 
 ### **✅ System Health**
-- **API Server**: Operational on port 8006 with Docker deployment
+- **API Server**: Operational on port 8007 with Docker deployment
 - **Database**: PostgreSQL with complete 20-year historical dataset
 - **Web Interface**: Professional dashboard with interactive analytics
 - **Performance**: All optimization targets exceeded significantly
 - **Testing**: Comprehensive validation across all components
 
 ### **🔗 Access Points**
-- **API Documentation**: http://127.0.0.1:8006/docs (Swagger/OpenAPI)
+- **API Documentation**: http://127.0.0.1:8007/docs (Swagger/OpenAPI)
 - **Analytics Dashboard**: `file:///Users/ashish/Claude/backtesting/web/dashboard.html`
 - **AI Chatbot**: `file:///Users/ashish/Claude/backtesting/web/chatbot.html`  
 - **Landing Page**: `file:///Users/ashish/Claude/backtesting/web/index.html`

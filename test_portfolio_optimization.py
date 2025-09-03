@@ -74,7 +74,7 @@ def test_engine_performance():
             
             start_time = time.time()
             response = requests.post(
-                'http://127.0.0.1:8006/api/backtest/portfolio',
+                'http://127.0.0.1:8007/api/backtest/portfolio',
                 json=backtest_request, 
                 timeout=30
             )

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Expected Portfolio Card Layout - After Fixes</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f8fafc;
+            margin: 20px;
+            line-height: 1.5;
+        }
+        
+        .comparison {
+            display: flex;
+            gap: 30px;
+            margin: 20px 0;
+        }
+        
+        .card-example {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            border: 2px solid #e2e8f0;
+            max-width: 400px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-before {
+            border-color: #ef4444;
+        }
+        
+        .card-after {
+            border-color: #10b981;
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1f2937;
+        }
+        
+        .allocation-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .chart-placeholder {
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .allocation-details {
+            flex: 1;
+        }
+        
+        /* NEW STYLING - After fixes */
+        .key-info-header {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        
+        .optimization-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            /* Enhanced styling from our fixes */
+            background: #f8fafc;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .metric-small {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.25rem 0;
+        }
+        
+        .metric-label {
+            font-size: 0.85rem;
+            color: #4b5563;
+            font-weight: 500;
+        }
+        
+        .metric-value {
+            color: #1a202c;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .description {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin: 16px 0 12px 0;
+        }
+        
+        .tech-details-header {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .asset-breakdown {
+            margin-top: 1rem;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 1rem;
+            /* De-emphasized styling from our fixes */
+            opacity: 0.7;
+            font-size: 0.8rem;
+        }
+        
+        .asset-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.25rem 0;
+            font-size: 0.85rem;
+        }
+        
+        .asset-name {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .asset-color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .asset-weight {
+            font-weight: 600;
+            color: #1a202c;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        
+        .before-badge {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .after-badge {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .highlight-box {
+            background: #fef3c7;
+            border: 2px dashed #f59e0b;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 16px 0;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 Expected Portfolio Card Layout - Before vs After Fixes</h1>
+    <p>This shows how the Conservative portfolio card should look before and after our fixes:</p>
+    
+    <div class="comparison">
+        <!-- BEFORE - What user reported seeing -->
+        <div class="card-example card-before">
+            <div class="status-badge before-badge">❌ BEFORE (Problematic)</div>
+            <h3 class="card-title">🛡️ Conservative</h3>
+            
+            <div class="allocation-container">
+                <div class="chart-placeholder">
+                    Chart
+                </div>
+                <div class="allocation-details">
+                    <!-- Old format - just technical details -->
+                    <div class="asset-breakdown">
+                        <div class="asset-item">
+                            <div class="asset-name">
+                                <div class="asset-color-dot" style="background-color: #dc2626;"></div>
+                                <span>US Bonds</span>
+                            </div>
+                            <div class="asset-weight">60.0%</div>
+                        </div>
+                        <div class="asset-item">
+                            <div class="asset-name">
+                                <div class="asset-color-dot" style="background-color: #059669;"></div>
+                                <span>International Stocks</span>
+                            </div>
+                            <div class="asset-weight">16.5%</div>
+                        </div>
+                        <div class="asset-item">
+                            <div class="asset-name">
+                                <div class="asset-color-dot" style="background-color: #4f46e5;"></div>
+                                <span>US Total Market</span>
+                            </div>
+                            <div class="asset-weight">13.5%</div>
+                        </div>
+                        <div class="asset-item">
+                            <div class="asset-name">
+                                <div class="asset-color-dot" style="background-color: #eab308;"></div>
+                                <span>Gold ETF</span>
+                            </div>
+                            <div class="asset-weight">10.0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <p class="description">Lower volatility, steady growth. Ideal for capital preservation and near-term goals.</p>
+            
+            <div class="highlight-box">
+                ⚠️ <strong>Problem:</strong> Only technical asset breakdown visible. No beginner-friendly metrics like "Expected Growth" or "10-Year Projection".
+            </div>
+        </div>
+        
+        <!-- AFTER - What should be displayed -->
+        <div class="card-example card-after">
+            <div class="status-badge after-badge">✅ AFTER (Fixed)</div>
+            <h3 class="card-title">🛡️ Conservative <span style="background: #10b981; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem;">OPTIMIZED</span></h3>
+            
+            <div class="allocation-container">
+                <div class="chart-placeholder">
+                    API Chart
+                </div>
+                <div class="allocation-details">
+                    <!-- NEW: Prominent beginner-friendly section -->
+                    <div class="key-info-header">
+                        💡 Key Information:
+                    </div>
+                    <div class="optimization-metrics">
+                        <div class="metric-small">
+                            <span class="metric-label">💰 Expected Growth:</span>
+                            <span class="metric-value">4.7% annually</span>
+                        </div>
+                        <div class="metric-small">
+                            <span class="metric-label">📊 Risk Level:</span>
+                            <span class="metric-value">Low (Steady)</span>
+                        </div>
+                        <div class="metric-small">
+                            <span class="metric-label">🎯 10-Year Projection:</span>
+                            <span class="metric-value">$150K</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <p class="description">Lower volatility, steady growth. Ideal for capital preservation and near-term goals.</p>
+            
+            <!-- Technical details moved to secondary position -->
+            <div class="tech-details-header">
+                📋 Technical Details (Asset Allocation):
+            </div>
+            <div class="asset-breakdown">
+                <div class="asset-item">
+                    <div class="asset-name">
+                        <div class="asset-color-dot" style="background-color: #dc2626;"></div>
+                        <span>US Bonds</span>
+                    </div>
+                    <div class="asset-weight">60.0%</div>
+                </div>
+                <div class="asset-item">
+                    <div class="asset-name">
+                        <div class="asset-color-dot" style="background-color: #059669;"></div>
+                        <span>International Stocks</span>
+                    </div>
+                    <div class="asset-weight">16.5%</div>
+                </div>
+                <div class="asset-item">
+                    <div class="asset-name">
+                        <div class="asset-color-dot" style="background-color: #4f46e5;"></div>
+                        <span>US Total Market</span>
+                    </div>
+                    <div class="asset-weight">13.5%</div>
+                </div>
+                <div class="asset-item">
+                    <div class="asset-name">
+                        <div class="asset-color-dot" style="background-color: #eab308;"></div>
+                        <span>Gold ETF</span>
+                    </div>
+                    <div class="asset-weight">10.0%</div>
+                </div>
+            </div>
+            
+            <div class="highlight-box" style="background: #dcfce7; border-color: #16a34a;">
+                ✅ <strong>Fixed:</strong> Beginner-friendly metrics prominently displayed in highlighted box, with technical details in secondary position.
+            </div>
+        </div>
+    </div>
+    
+    <h2>🔍 What to Look For</h2>
+    
+    <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3>✅ Expected Changes After Our Fixes:</h3>
+        <ol>
+            <li><strong>💡 Key Information Header</strong> - Should appear above the metrics</li>
+            <li><strong>Highlighted Metrics Box</strong> - Light blue background with border around the three metrics</li>
+            <li><strong>Expected Values from API</strong>:
+                <ul>
+                    <li>Conservative: <strong>4.7% annually</strong>, <strong>Low (Steady)</strong>, <strong>~$150K</strong></li>
+                    <li>Balanced: <strong>14.0% annually</strong>, <strong>Medium (Some ups/downs)</strong>, <strong>~$400K</strong></li>
+                    <li>Aggressive: <strong>15.8% annually</strong>, <strong>Higher (More volatility)</strong>, <strong>~$430K</strong></li>
+                </ul>
+            </li>
+            <li><strong>📋 Technical Details Label</strong> - Should appear above asset breakdown</li>
+            <li><strong>De-emphasized Asset List</strong> - Smaller, lighter text (70% opacity)</li>
+        </ol>
+    </div>
+    
+    <div style="background: #fef3c7; border: 2px solid #f59e0b; padding: 16px; border-radius: 8px; margin: 20px 0;">
+        <h3>🤔 If You're Still Seeing the "Before" Version:</h3>
+        <p><strong>Possible Issues to Check:</strong></p>
+        <ol>
+            <li><strong>Cache Issue</strong> - Try hard refresh (Ctrl+Shift+R / Cmd+Shift+R)</li>
+            <li><strong>updateCardMetrics() not called</strong> - Check browser console for errors</li>
+            <li><strong>API data not flowing</strong> - Verify API returns expected structure</li>
+            <li><strong>CSS not applied</strong> - Check if optimization-metrics styling is present</li>
+        </ol>
+        
+        <p><strong>Browser Console Debug Commands:</strong></p>
+        <ul>
+            <li><code>window.testMetrics()</code> - Force display of beginner metrics</li>
+            <li><code>window.debugPortfolioCards()</code> - Show current state of all cards</li>
+            <li><code>console.log(optimizedPortfolios)</code> - Show loaded portfolio data</li>
+        </ul>
+    </div>
+    
+    <h2>📱 Testing Instructions</h2>
+    <div style="background: white; padding: 20px; border-radius: 8px;">
+        <ol>
+            <li>Open: <code>http://localhost:8007/guided-dashboard.html</code></li>
+            <li>Fill Step 1: Age=35, Amount=100000, Timeline=20, Account=taxable</li>
+            <li>Click "Continue to Portfolio Selection" (should see API call in Network tab)</li>
+            <li>Look for the <strong>💡 Key Information</strong> box in each portfolio card</li>
+            <li>Values should match API response (Conservative: 4.7%, etc.)</li>
+        </ol>
+    </div>
+</body>
+</html>

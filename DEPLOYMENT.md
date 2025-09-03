@@ -58,7 +58,7 @@ docker-compose logs -f api  # Monitor startup logs
 python3 load_historical_data.py
 
 # 6. Verify deployment
-curl http://localhost:8006/health
+curl http://localhost:8007/health
 # Expected: {"status":"healthy","database":"connected","timestamp":"..."}
 
 # 7. Access the system
@@ -66,7 +66,7 @@ echo "🎉 Deployment Complete!"
 echo "📊 Analytics Dashboard: file://$(pwd)/web/dashboard.html"
 echo "🏠 Landing Page: file://$(pwd)/web/index.html" 
 echo "🤖 AI Chatbot: file://$(pwd)/web/chatbot.html"
-echo "📖 API Docs: http://localhost:8006/docs"
+echo "📖 API Docs: http://localhost:8007/docs"
 ```
 
 ### **Verification Commands**
@@ -146,10 +146,10 @@ session.close()
 python3 -m src.api.main
 
 # Or with uvicorn directly:
-uvicorn src.api.main:app --host 0.0.0.0 --port 8006 --reload
+uvicorn src.api.main:app --host 0.0.0.0 --port 8007 --reload
 
 # Verify API is running
-curl http://localhost:8006/health
+curl http://localhost:8007/health
 # Expected: {"status":"healthy","database":"connected",...}
 ```
 
@@ -180,13 +180,13 @@ POSTGRES_PASSWORD=secure_password_here
 POSTGRES_DB=backtesting
 
 # API Configuration  
-API_PORT=8006
+API_PORT=8007
 API_HOST=0.0.0.0
 DEBUG=false
 LOG_LEVEL=INFO
 
 # CORS Configuration (for web interface)
-ALLOWED_ORIGINS=["http://localhost:8006","file://"]
+ALLOWED_ORIGINS=["http://localhost:8007","file://"]
 
 # Performance Configuration
 MAX_CONNECTIONS=20
@@ -220,7 +220,7 @@ services:
       - DEBUG=false
       - LOG_LEVEL=INFO
     ports:
-      - "8006:8000"
+      - "8007:8000"
     depends_on:
       - db
     restart: always
@@ -243,7 +243,7 @@ server {
     server_name your-domain.com;
 
     location / {
-        proxy_pass http://localhost:8006;
+        proxy_pass http://localhost:8007;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -266,10 +266,10 @@ server {
 
 ```bash
 # Basic health check
-curl http://localhost:8006/health
+curl http://localhost:8007/health
 
 # Detailed system status  
-curl http://localhost:8006/api/data/status
+curl http://localhost:8007/api/data/status
 
 # Performance check
 python3 FINAL_DEMO_WEEK8.py --quick
@@ -303,7 +303,7 @@ grep ERROR logs/portfolio_api.log | tail -10
 
 ```bash
 # API response time testing
-curl -w "@curl-format.txt" -s http://localhost:8006/api/backtest/portfolio \
+curl -w "@curl-format.txt" -s http://localhost:8007/api/backtest/portfolio \
   -X POST -H "Content-Type: application/json" \
   -d '{"allocation":{"allocation":{"VTI":0.6,"VTIAX":0.3,"BND":0.1}}}'
 
@@ -342,17 +342,17 @@ python3 test_claude_integration.py       # AI chatbot functionality
 
 ```bash
 # Core backtesting
-curl -X POST http://localhost:8006/api/backtest/portfolio \
+curl -X POST http://localhost:8007/api/backtest/portfolio \
   -H "Content-Type: application/json" \
   -d '{"allocation":{"allocation":{"VTI":0.6,"VTIAX":0.3,"BND":0.1}}}'
 
 # Extended historical analysis
-curl -X POST http://localhost:8006/api/analyze/extended-historical \
+curl -X POST http://localhost:8007/api/analyze/extended-historical \
   -H "Content-Type: application/json" \  
   -d '{"allocation":{"allocation":{"VTI":0.6,"VTIAX":0.3,"BND":0.1}},"analysis_period":20}'
 
 # AI portfolio recommendations
-curl -X POST http://localhost:8006/api/chat/recommend \
+curl -X POST http://localhost:8007/api/chat/recommend \
   -H "Content-Type: application/json" \
   -d '{"message":"I want a balanced portfolio for retirement"}'
 ```
@@ -402,7 +402,7 @@ print('Connection successful:', engine.execute('SELECT 1').scalar())
 #### **2. API Server Issues**
 ```bash
 # Check port availability
-lsof -i :8006
+lsof -i :8007
 
 # Verify Python dependencies
 pip check
@@ -455,11 +455,11 @@ chmod +r web/*.html
 
 # Verify API connectivity from browser
 # Open browser console and run:
-fetch('http://localhost:8006/health').then(r => r.json()).then(console.log)
+fetch('http://localhost:8007/health').then(r => r.json()).then(console.log)
 
 # Check CORS configuration
 curl -H "Origin: file://" -H "Access-Control-Request-Method: POST" \
-     -X OPTIONS http://localhost:8006/api/backtest/portfolio
+     -X OPTIONS http://localhost:8007/api/backtest/portfolio
 ```
 
 ---
@@ -564,7 +564,7 @@ After completing deployment, verify all components are working:
 
 ### **✅ Final Verification Checklist**
 
-1. **API Server**: http://localhost:8006/health returns healthy status
+1. **API Server**: http://localhost:8007/health returns healthy status
 2. **Database**: Contains 33,725+ historical price records
 3. **Core Backtesting**: Returns results in <0.5s for 10-year analysis
 4. **Advanced Analytics**: All 6 analysis engines operational

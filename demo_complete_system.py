@@ -12,7 +12,7 @@ def demo_portfolio_system():
     print("🚀 Portfolio Backtesting PoC - Complete System Demo")
     print("=" * 65)
     
-    base_url = "http://127.0.0.1:8006"
+    base_url = "http://127.0.0.1:8007"
     
     # 1. System Health Check
     print("1️⃣  SYSTEM HEALTH CHECK")

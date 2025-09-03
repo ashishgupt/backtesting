@@ -46,9 +46,9 @@ This document provides comprehensive acceptance criteria for validating the comp
 
 #### **1.3 API Endpoint Functionality**
 - [ ] **Test**: FastAPI server health
-  - **Expected**: Server running on port 8006 with healthy status
+  - **Expected**: Server running on port 8007 with healthy status
   - **Validation**: GET /health endpoint returns 200 OK
-  - **Command**: `curl http://localhost:8006/health`
+  - **Command**: `curl http://localhost:8007/health`
 
 - [ ] **Test**: Portfolio optimization endpoints
   - **Expected**: All optimization endpoints return valid JSON
@@ -57,7 +57,7 @@ This document provides comprehensive acceptance criteria for validating the comp
 
 - [ ] **Test**: OpenAPI documentation accessibility
   - **Expected**: Swagger docs available at /docs endpoint
-  - **Validation**: Navigate to http://localhost:8006/docs
+  - **Validation**: Navigate to http://localhost:8007/docs
   - **Command**: Browser verification of API documentation
 
 ---
@@ -227,7 +227,7 @@ This document provides comprehensive acceptance criteria for validating the comp
 ## 🚀 **ACCEPTANCE TEST EXECUTION**
 
 ### **Prerequisites**
-1. **System Status**: API server running on port 8006
+1. **System Status**: API server running on port 8007
 2. **Database**: PostgreSQL with complete historical dataset
 3. **Environment**: Local development environment with Docker
 4. **Tools**: Python test suite, browser for web interface testing
@@ -253,7 +253,7 @@ This document provides comprehensive acceptance criteria for validating the comp
 docker-compose up -d
 
 # Test API health
-curl http://localhost:8006/health
+curl http://localhost:8007/health
 
 # Run comprehensive test suite  
 python FINAL_DEMO_WEEK8.py

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Optimizer - Fixed Pie Charts</title>
+    <script src="/static/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-section {
+            padding: 2rem;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+        
+        input {
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+        
+        .optimize-btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        
+        .optimize-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+        }
+        
+        .optimize-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+        }
+        
+        .portfolio-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+        }
+        
+        .portfolio-card {
+            background: #f8fafc;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .portfolio-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .portfolio-card.conservative {
+            border-color: #10b981;
+            background: linear-gradient(145deg, #ecfdf5 0%, #d1fae5 100%);
+        }
+        
+        .portfolio-card.balanced {
+            border-color: #3b82f6;
+            background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%);
+        }
+        
+        .portfolio-card.aggressive {
+            border-color: #ef4444;
+            background: linear-gradient(145deg, #fef2f2 0%, #fecaca 100%);
+        }
+        
+        .portfolio-card h3 {
+            color: #1f2937;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .metric {
+            text-align: center;
+        }
+        
+        .metric-value {
+            display: block;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        
+        .metric-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        
+        .allocation-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .allocation-section h4 {
+            margin-bottom: 1rem;
+            color: #374151;
+            text-align: center;
+        }
+        
+        .pie-chart-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            justify-content: center;
+        }
+        
+        .pie-chart-canvas {
+            width: 180px !important;
+            height: 180px !important;
+        }
+        
+        .chart-legend {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            margin-right: 0.5rem;
+        }
+        
+        .legend-text {
+            color: #374151;
+            font-weight: 500;
+        }
+        
+        .target-achievement {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Portfolio Optimizer</h1>
+            <p>AI-Powered Portfolio Optimization with Pie Chart Visualizations</p>
+        </div>
+        
+        <div class="form-section">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Taxable Account</label>
+                    <input type="number" id="taxable" value="50000" step="1000" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Tax-Deferred Account</label>
+                    <input type="number" id="tax_deferred" value="50000" step="1000" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Tax-Free Account</label>
+                    <input type="number" id="tax_free" value="30000" step="1000" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Target Amount</label>
+                    <input type="number" id="target_amount" value="1000000" step="10000" min="1000">
+                </div>
+                <div class="form-group">
+                    <label>Time Horizon (Years)</label>
+                    <input type="number" id="time_horizon" value="20" min="1" max="50">
+                </div>
+            </div>
+            
+            <button class="optimize-btn" onclick="optimizePortfolio()">
+                Optimize Portfolio & Create Pie Charts
+            </button>
+        </div>
+        
+        <div id="loading" class="loading" style="display: none;">
+            <p>Optimizing portfolios... This may take 15-20 seconds</p>
+        </div>
+        
+        <div id="results" class="portfolio-cards" style="display: none;">
+            <!-- Results will be shown here -->
+        </div>
+    </div>
+
+    <script>
+        console.log('Chart.js loaded:', typeof Chart !== 'undefined');
+        
+        function optimizePortfolio() {
+            const btn = document.querySelector('.optimize-btn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            
+            // Get form values
+            const data = {
+                account_types: {
+                    taxable: parseInt(document.getElementById('taxable').value),
+                    tax_deferred: parseInt(document.getElementById('tax_deferred').value),
+                    tax_free: parseInt(document.getElementById('tax_free').value)
+                },
+                target_amount: parseInt(document.getElementById('target_amount').value),
+                time_horizon: parseInt(document.getElementById('time_horizon').value)
+            };
+            
+            // Update UI
+            btn.disabled = true;
+            btn.textContent = 'Optimizing...';
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            
+            // Call API
+            fetch('/api/enhanced/portfolio/optimize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('API Response:', data);
+                displayResults(data.portfolios);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error optimizing portfolio. Please try again.');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = 'Optimize Portfolio & Create Pie Charts';
+                loading.style.display = 'none';
+            });
+        }
+        
+        function displayResults(portfolios) {
+            const container = document.getElementById('results');
+            container.innerHTML = '';
+            
+            portfolios.forEach((portfolio, index) => {
+                const card = createPortfolioCard(portfolio, index);
+                container.appendChild(card);
+            });
+            
+            container.style.display = 'grid';
+        }
+        
+        function createPortfolioCard(portfolio, index) {
+            const div = document.createElement('div');
+            div.className = `portfolio-card ${portfolio.strategy.toLowerCase()}`;
+            
+            // Get allocations
+            const allocations = Object.entries(portfolio.allocation)
+                .filter(([_, weight]) => weight > 0.01)
+                .sort(([_, a], [__, b]) => b - a);
+            
+            const chartId = `chart-${index}`;
+            
+            div.innerHTML = `
+                <h3>${portfolio.strategy.toUpperCase()}</h3>
+                
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <span class="metric-value">${(portfolio.expected_return * 100).toFixed(1)}%</span>
+                        <span class="metric-label">Expected Return</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">${(portfolio.volatility * 100).toFixed(1)}%</span>
+                        <span class="metric-label">Volatility</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">${portfolio.sharpe_ratio.toFixed(2)}</span>
+                        <span class="metric-label">Sharpe Ratio</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">${portfolio.overall_crisis_score.toFixed(0)}/100</span>
+                        <span class="metric-label">Crisis Score</span>
+                    </div>
+                </div>
+                
+                <div class="allocation-section">
+                    <h4>Top Holdings</h4>
+                    <div class="pie-chart-container">
+                        <canvas id="${chartId}" class="pie-chart-canvas"></canvas>
+                        <div class="chart-legend" id="${chartId}-legend"></div>
+                    </div>
+                </div>
+                
+                <div class="target-achievement">
+                    ${(portfolio.target_achievement_probability * 100).toFixed(0)}% chance to reach target<br>
+                    Expected: $${portfolio.expected_final_value.toLocaleString()}
+                </div>
+            `;
+            
+            // Create pie chart immediately
+            setTimeout(() => createPieChart(chartId, allocations), 100);
+            
+            return div;
+        }
+        
+        function createPieChart(chartId, allocations) {
+            console.log('Creating chart:', chartId, allocations);
+            
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js not loaded');
+                document.getElementById(`${chartId}-legend`).innerHTML = 
+                    '<p style="color: red; font-size: 0.8rem;">Chart.js not loaded</p>';
+                return;
+            }
+            
+            const canvas = document.getElementById(chartId);
+            const legendDiv = document.getElementById(`${chartId}-legend`);
+            
+            if (!canvas || !legendDiv) {
+                console.error('Canvas or legend not found:', chartId);
+                return;
+            }
+            
+            const colors = [
+                '#2563eb', // Professional blue 
+                '#059669', // Emerald green 
+                '#dc2626', // Red
+                '#ea580c', // Orange
+                '#7c3aed', // Purple
+                '#0891b2', // Cyan
+                '#be185d', // Pink
+                '#374151', // Gray
+                '#0d9488', // Teal
+                '#7c2d12'  // Brown
+            ];
+            
+            try {
+                new Chart(canvas, {
+                    type: 'doughnut', // Changed to doughnut for consistency
+                    data: {
+                        labels: allocations.map(([asset, _]) => asset),
+                        datasets: [{
+                            data: allocations.map(([_, weight]) => (weight * 100).toFixed(1)),
+                            backgroundColor: colors.slice(0, allocations.length),
+                            borderColor: '#ffffff',
+                            borderWidth: 3,
+                            hoverBorderWidth: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '50%', // Creates the donut hole
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleColor: '#ffffff',
+                                bodyColor: '#ffffff',
+                                borderColor: '#ffffff',
+                                borderWidth: 1,
+                                cornerRadius: 8,
+                                displayColors: true,
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.label}: ${context.parsed}%`;
+                                    }
+                                }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'point'
+                        }
+                    }
+                });
+                
+                // Create legend
+                legendDiv.innerHTML = allocations.map(([asset, weight], index) => `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: ${colors[index]}"></div>
+                        <div class="legend-text">${asset}: ${(weight * 100).toFixed(1)}%</div>
+                    </div>
+                `).join('');
+                
+                console.log('✅ Chart created successfully:', chartId);
+                
+            } catch (error) {
+                console.error('❌ Error creating chart:', error);
+                legendDiv.innerHTML = `<p style="color: red; font-size: 0.8rem;">Chart error: ${error.message}</p>`;
+            }
+        }
+        
+        // Test chart on page load
+        window.addEventListener('load', function() {
+            console.log('Page loaded. Chart.js available:', typeof Chart !== 'undefined');
+        });
+    </script>
+</body>
+</html>

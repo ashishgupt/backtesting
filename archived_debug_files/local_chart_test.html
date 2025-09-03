@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Local Chart.js Test</title>
+    <script src="chart.js"></script>
+</head>
+<body>
+    <h1>Local Chart.js Test</h1>
+    <canvas id="testChart" width="300" height="300"></canvas>
+    <div id="status"></div>
+    
+    <script>
+        function testChart() {
+            const status = document.getElementById('status');
+            
+            if (typeof Chart === 'undefined') {
+                status.innerHTML = '<p style="color: red;">❌ Chart.js not loaded from local file</p>';
+                return;
+            }
+            
+            status.innerHTML = '<p style="color: green;">✅ Chart.js loaded successfully from local file!</p>';
+            
+            try {
+                const ctx = document.getElementById('testChart').getContext('2d');
+                const chart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['VTI', 'BND', 'VTIAX'],
+                        datasets: [{
+                            data: [50, 30, 20],
+                            backgroundColor: ['#4f46e5', '#7c3aed', '#059669']
+                        }]
+                    }
+                });
+                
+                status.innerHTML += '<p style="color: green;">✅ Pie chart created successfully!</p>';
+                
+            } catch (error) {
+                status.innerHTML += '<p style="color: red;">❌ Error creating chart: ' + error.message + '</p>';
+            }
+        }
+        
+        // Wait for Chart.js to load
+        function waitForChart() {
+            if (typeof Chart !== 'undefined') {
+                testChart();
+            } else {
+                setTimeout(waitForChart, 100);
+            }
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', waitForChart);
+        } else {
+            waitForChart();
+        }
+    </script>
+</body>
+</html>

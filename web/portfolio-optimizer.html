@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Optimization Engine - Sprint 3</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+        }
+        
+        .form-section {
+            background: #f8fafc;
+            padding: 2rem;
+            border-radius: 12px;
+        }
+        
+        .form-section h2 {
+            color: #4f46e5;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .form-group input, 
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        
+        .form-group input:focus, 
+        .form-group select:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        
+        .optimize-btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+        
+        .optimize-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+        
+        .optimize-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .results-section {
+            background: #fff;
+        }
+        
+        .results-section h2 {
+            color: #4f46e5;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+        
+        .portfolio-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .portfolio-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+        
+        .portfolio-card:hover {
+            border-color: #4f46e5;
+            transform: translateY(-2px);
+        }
+        
+        .portfolio-card.selected {
+            border-color: #4f46e5;
+            background: #f0f9ff;
+        }
+        
+        .portfolio-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            text-transform: capitalize;
+        }
+        
+        .portfolio-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .metric {
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4f46e5;
+        }
+        
+        .metric-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .allocation {
+            margin-top: 1rem;
+        }
+        
+        .allocation h4 {
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .allocation-bar {
+            background: #f3f4f6;
+            border-radius: 4px;
+            height: 6px;
+            margin-bottom: 0.25rem;
+            overflow: hidden;
+        }
+        
+        .allocation-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+        }
+        
+        .allocation-text {
+            font-size: 0.75rem;
+            color: #6b7280;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .target-analysis {
+            background: #f0f9ff;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+        }
+        
+        .target-analysis h3 {
+            color: #1e40af;
+            margin-bottom: 1rem;
+        }
+        
+        .target-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        
+        .target-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Portfolio Optimization Engine</h1>
+            <p>Sprint 3 - Three-Strategy Optimization with Advanced Analytics</p>
+        </div>
+        
+        <div class="content">
+            <div class="form-section">
+                <h2>📊 Investment Parameters</h2>
+                <form id="optimizationForm">
+                    <div class="form-group">
+                        <label for="currentSavings">Current Savings ($)</label>
+                        <input type="number" id="currentSavings" value="50000" min="1000" step="1000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="targetAmount">Target Amount ($) - Optional</label>
+                        <input type="number" id="targetAmount" value="150000" min="0" step="1000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="timeHorizon">Time Horizon (years)</label>
+                        <input type="number" id="timeHorizon" value="15" min="1" max="50">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="accountType">Account Type</label>
+                        <select id="accountType">
+                            <option value="taxable">Taxable Brokerage</option>
+                            <option value="tax_deferred">401k / Traditional IRA</option>
+                            <option value="tax_free" selected>Roth IRA / HSA</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="newMoneyAvailable" checked>
+                            <label for="newMoneyAvailable">Can add new money regularly?</label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" id="contributionGroup">
+                        <label for="maxAnnualContribution">Max Annual Contribution ($)</label>
+                        <input type="number" id="maxAnnualContribution" value="6000" min="0" step="500">
+                    </div>
+                    
+                    <button type="submit" class="optimize-btn">
+                        🚀 Optimize My Portfolio
+                    </button>
+                </form>
+            </div>
+            
+            <div class="results-section">
+                <h2>📈 Optimized Portfolios</h2>
+                <div id="results">
+                    <div class="loading" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Optimizing your portfolio...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('optimizationForm');
+        const results = document.getElementById('results');
+        const newMoneyCheckbox = document.getElementById('newMoneyAvailable');
+        const contributionGroup = document.getElementById('contributionGroup');
+        
+        // Toggle contribution input visibility
+        newMoneyCheckbox.addEventListener('change', () => {
+            contributionGroup.style.display = newMoneyCheckbox.checked ? 'block' : 'none';
+        });
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            const data = {
+                current_savings: parseFloat(document.getElementById('currentSavings').value),
+                target_amount: document.getElementById('targetAmount').value ? 
+                    parseFloat(document.getElementById('targetAmount').value) : null,
+                time_horizon: parseInt(document.getElementById('timeHorizon').value),
+                account_type: document.getElementById('accountType').value,
+                new_money_available: document.getElementById('newMoneyAvailable').checked,
+                max_annual_contribution: document.getElementById('newMoneyAvailable').checked ? 
+                    parseFloat(document.getElementById('maxAnnualContribution').value) : null
+            };
+            
+            // Show loading
+            results.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Optimizing your portfolio...</p>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch('http://localhost:8007/optimize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                displayResults(result);
+                
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="error">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        });
+        
+        function displayResults(result) {
+            const portfolios = result.portfolios;
+            const targetAnalysis = result.target_analysis;
+            
+            let html = '<div class="portfolio-cards">';
+            
+            Object.entries(portfolios).forEach(([strategy, portfolio]) => {
+                const topAllocations = Object.entries(portfolio.allocation)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 4);
+                
+                html += `
+                    <div class="portfolio-card">
+                        <h3>${strategy}</h3>
+                        <div class="portfolio-metrics">
+                            <div class="metric">
+                                <div class="metric-value">${(portfolio.expected_return * 100).toFixed(1)}%</div>
+                                <div class="metric-label">Expected Return</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">${(portfolio.expected_volatility * 100).toFixed(1)}%</div>
+                                <div class="metric-label">Volatility</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">${portfolio.sharpe_ratio.toFixed(2)}</div>
+                                <div class="metric-label">Sharpe Ratio</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">${(portfolio.max_drawdown * 100).toFixed(1)}%</div>
+                                <div class="metric-label">Max Drawdown</div>
+                            </div>
+                        </div>
+                        <div class="allocation">
+                            <h4>Top Allocations</h4>
+                            ${topAllocations.map(([asset, weight]) => `
+                                <div class="allocation-bar">
+                                    <div class="allocation-fill" style="width: ${weight * 100}%"></div>
+                                </div>
+                                <div class="allocation-text">
+                                    <span>${asset}</span>
+                                    <span>${(weight * 100).toFixed(1)}%</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <p style="margin-top: 1rem; font-size: 0.875rem; color: #6b7280;">
+                            <strong>Rebalancing:</strong> ${portfolio.optimal_rebalancing}
+                        </p>
+                        ${portfolio.new_money_needed_annual ? `
+                            <p style="font-size: 0.875rem; color: #059669; margin-top: 0.5rem;">
+                                💰 New money needed: $${portfolio.new_money_needed_annual.toLocaleString()}/year
+                            </p>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            // Add target analysis if available
+            if (targetAnalysis) {
+                html += `
+                    <div class="target-analysis">
+                        <h3>🎯 Target Achievement Analysis</h3>
+                        <p style="margin-bottom: 1rem;">Probability of reaching $${result.request_summary.target_amount.toLocaleString()} in ${result.request_summary.time_horizon} years:</p>
+                        <div class="target-grid">
+                            ${Object.entries(targetAnalysis).map(([strategy, analysis]) => `
+                                <div class="target-card">
+                                    <h4 style="text-transform: capitalize; margin-bottom: 0.5rem;">${strategy}</h4>
+                                    <div style="font-size: 2rem; font-weight: 700; color: ${analysis.probability > 0.7 ? '#059669' : analysis.probability > 0.5 ? '#d97706' : '#dc2626'}; margin-bottom: 0.5rem;">
+                                        ${(analysis.probability * 100).toFixed(0)}%
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: #6b7280;">
+                                        Expected: $${Math.round(analysis.expected_final_value).toLocaleString()}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            results.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

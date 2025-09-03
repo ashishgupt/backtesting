@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stress Test UI Fix Verification</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 20px 0; }
+        .metric-card { background: #f8f9fa; padding: 1rem; border-radius: 8px; text-align: center; }
+        .metric-value { font-size: 1.5rem; font-weight: bold; color: #2563eb; }
+        .metric-label { font-size: 0.9rem; color: #6b7280; margin-top: 0.5rem; }
+        .recommendations { margin-top: 20px; }
+        .recommendation-item { display: flex; align-items: center; margin: 10px 0; padding: 10px; background: #f0f9ff; border-radius: 6px; }
+        .recommendation-icon { margin-right: 10px; font-size: 1.2rem; }
+        button { background: #2563eb; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; margin: 10px 5px; }
+        button:hover { background: #1d4ed8; }
+        #result { margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Stress Test UI Fix Verification</h1>
+    <p>This tests the fixed JavaScript parsing logic for the stress test API response.</p>
+    
+    <button onclick="testWithRealData()">Test with Real API Data</button>
+    <button onclick="testWithMockData()">Test with Mock Data</button>
+    <button onclick="clearResults()">Clear Results</button>
+    
+    <div id="result"></div>
+    
+    <!-- Stress Test Results (same structure as guided dashboard) -->
+    <div id="stressTestResults" style="display: none;">
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value" id="crisisReturn">-</div>
+                <div class="metric-label">Avg Crisis Return</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="recoveryTime">-</div>
+                <div class="metric-label">Recovery Time</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="resilienceScore">-</div>
+                <div class="metric-label">Resilience Score</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="worstDrawdown">-</div>
+                <div class="metric-label">Worst Drawdown</div>
+            </div>
+        </div>
+        
+        <div class="recommendations">
+            <h3>🛡️ Crisis Resilience Analysis</h3>
+            <div id="crisisInsights"></div>
+        </div>
+    </div>
+
+    <script>
+        function testWithMockData() {
+            console.log('Testing with mock data structure...');
+            
+            // Mock data matching the actual API response structure
+            const mockData = {
+                "crisis_results": [
+                    {
+                        "crisis_name": "2008 Financial Crisis",
+                        "crisis_decline": -0.284,
+                        "recovery_time_days": 207,
+                        "resilience_score": 62.0
+                    },
+                    {
+                        "crisis_name": "2022 Bear Market", 
+                        "crisis_decline": -0.226,
+                        "recovery_time_days": 165,
+                        "resilience_score": 70.7
+                    }
+                ],
+                "summary": {
+                    "overall_resilience_score": 66.4,
+                    "avg_recovery_time_days": 186.0,
+                    "avg_crisis_decline": -0.255,
+                    "worst_crisis_decline": -0.284,
+                    "crisis_results_count": 2
+                }
+            };
+            
+            processStressTestData(mockData);
+            document.getElementById('result').innerHTML = `
+                <h3>✅ Mock Data Test Results</h3>
+                <p><strong>Data processed successfully!</strong> Check the metrics below.</p>
+                <pre>${JSON.stringify(mockData, null, 2)}</pre>
+            `;
+        }
+        
+        async function testWithRealData() {
+            console.log('Testing with real API data...');
+            document.getElementById('result').innerHTML = '<p>🔄 Calling real API...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:8007/api/analyze/stress-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        allocation: {"VTI": 0.6, "BND": 0.2, "VTIAX": 0.15, "VNQ": 0.05},
+                        crisis_periods: ['2008-financial-crisis', '2020-covid-crash', '2022-bear-market']
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                processStressTestData(data);
+                
+                document.getElementById('result').innerHTML = `
+                    <h3>✅ Real API Test Results</h3>
+                    <p><strong>API call successful!</strong> Data processed and displayed.</p>
+                    <p>Crisis count: ${data.crisis_results.length}</p>
+                    <p>Resilience score: ${data.summary.overall_resilience_score.toFixed(1)}</p>
+                `;
+                
+            } catch (error) {
+                console.error('Real API test failed:', error);
+                document.getElementById('result').innerHTML = `
+                    <h3>❌ Real API Test Failed</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>This might be due to CORS or server issues. Try the mock data test instead.</p>
+                `;
+            }
+        }
+        
+        // Fixed processing function (same as in guided-dashboard.html)
+        function processStressTestData(data) {
+            console.log('Processing stress test data:', data);
+            
+            // Handle the actual API response structure
+            const crisisResults = data.crisis_results || [];
+            const summary = data.summary || {};
+            
+            // Calculate display values
+            const avgReturn = summary.avg_crisis_decline || 0;
+            const avgRecovery = summary.avg_recovery_time_days || 0;
+            const worstDrawdown = summary.worst_crisis_decline || 0;
+            const resilienceScore = summary.overall_resilience_score || 0;
+            
+            // Update UI elements
+            document.getElementById('crisisReturn').textContent = `${(avgReturn * 100).toFixed(1)}%`;
+            document.getElementById('recoveryTime').textContent = `${Math.round(avgRecovery)} days`;
+            document.getElementById('resilienceScore').textContent = `${resilienceScore.toFixed(0)}/100`;
+            document.getElementById('worstDrawdown').textContent = `${(Math.abs(worstDrawdown) * 100).toFixed(1)}%`;
+            
+            // Generate insights
+            generateCrisisInsights(data);
+            
+            // Show results
+            document.getElementById('stressTestResults').style.display = 'block';
+        }
+        
+        // Fixed insights function (same as in guided-dashboard.html)
+        function generateCrisisInsights(data) {
+            const summary = data.summary || {};
+            const resilience = summary.overall_resilience_score || 65;
+            const avgRecovery = summary.avg_recovery_time_days || 220;
+            const crisisCount = summary.crisis_results_count || 0;
+            
+            let insights = `
+                <div class="recommendation-item">
+                    <div class="recommendation-icon">🛡️</div>
+                    <div>Your portfolio shows ${resilience > 70 ? 'strong' : resilience > 50 ? 'moderate' : 'limited'} resilience to market crises with a score of ${Math.round(resilience)}/100.</div>
+                </div>
+                <div class="recommendation-item">
+                    <div class="recommendation-icon">⏱️</div>
+                    <div>Based on ${crisisCount} major crisis scenarios, your portfolio typically recovers within ${Math.round(avgRecovery/30)} months after market downturns.</div>
+                </div>
+            `;
+            
+            document.getElementById('crisisInsights').innerHTML = insights;
+        }
+        
+        function clearResults() {
+            document.getElementById('stressTestResults').style.display = 'none';
+            document.getElementById('result').innerHTML = '';
+            console.clear();
+        }
+        
+        console.log('🧪 Stress Test UI Fix Verification loaded');
+        console.log('Click buttons above to test the fixed parsing logic');
+    </script>
+</body>
+</html>

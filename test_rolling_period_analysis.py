@@ -19,7 +19,7 @@ sys.path.append('/Users/ashish/Claude/backtesting')
 
 def test_api_endpoint(endpoint: str, payload: Dict[str, Any]) -> Dict[str, Any]:
     """Test an API endpoint and return the response"""
-    base_url = "http://localhost:8006"
+    base_url = "http://localhost:8007"
     url = f"{base_url}{endpoint}"
     
     print(f"\n🔍 Testing {endpoint}")
@@ -112,7 +112,7 @@ def test_api_health():
     print("🏥 Checking API health...")
     
     try:
-        response = requests.get("http://localhost:8006/health", timeout=5)
+        response = requests.get("http://localhost:8007/health", timeout=5)
         if response.status_code == 200:
             health_data = response.json()
             print(f"✅ API Status: {health_data['status']}")
@@ -198,7 +198,7 @@ def main():
     # Test 4: Examples endpoint  
     print(f"\n🔍 Testing /api/analyze/examples")
     try:
-        response = requests.get("http://localhost:8006/api/analyze/examples")
+        response = requests.get("http://localhost:8007/api/analyze/examples")
         if response.status_code == 200:
             examples = response.json()
             print("✅ Examples endpoint working")

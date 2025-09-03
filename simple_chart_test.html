@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Pie Chart Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #f5f5f5;
+        }
+        .chart-container { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            max-width: 400px; 
+            margin: 0 auto;
+        }
+        canvas { 
+            width: 300px !important; 
+            height: 300px !important; 
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <h2>Simple Portfolio Pie Chart Test</h2>
+        <canvas id="myChart"></canvas>
+        <div id="status"></div>
+    </div>
+    
+    <script>
+        function createChart() {
+            const status = document.getElementById('status');
+            
+            // Check if Chart.js is loaded
+            if (typeof Chart === 'undefined') {
+                status.innerHTML = '<p style="color: red;">❌ Chart.js not loaded</p>';
+                return;
+            }
+            
+            status.innerHTML = '<p style="color: green;">✅ Chart.js loaded</p>';
+            
+            const ctx = document.getElementById('myChart').getContext('2d');
+            
+            try {
+                const chart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['VTI', 'BND', 'VTIAX', 'VNQ', 'GLD'],
+                        datasets: [{
+                            data: [40, 30, 20, 7, 3],
+                            backgroundColor: [
+                                '#4f46e5',
+                                '#7c3aed', 
+                                '#059669',
+                                '#dc2626',
+                                '#ea580c'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+                
+                status.innerHTML += '<p style="color: green;">✅ Chart created successfully!</p>';
+                
+            } catch (error) {
+                status.innerHTML += '<p style="color: red;">❌ Error creating chart: ' + error.message + '</p>';
+            }
+        }
+        
+        // Wait for Chart.js to load
+        function waitForChart() {
+            if (typeof Chart !== 'undefined') {
+                createChart();
+            } else {
+                console.log('Waiting for Chart.js...');
+                setTimeout(waitForChart, 100);
+            }
+        }
+        
+        // Start when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', waitForChart);
+        } else {
+            waitForChart();
+        }
+    </script>
+</body>
+</html>

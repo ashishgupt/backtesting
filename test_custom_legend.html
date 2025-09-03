@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Legend Solution Test</title>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .chart-wrapper {
+            height: 200px;
+            position: relative;
+            margin-bottom: 15px;
+        }
+        h1 {
+            text-align: center;
+            color: #1f2937;
+            margin-bottom: 30px;
+            grid-column: 1 / -1;
+        }
+        h3 {
+            margin: 0 0 15px 0;
+            color: #374151;
+        }
+        
+        /* Custom Legend Styles */
+        .chart-legend {
+            margin-top: 12px;
+            margin-bottom: 8px;        /* Add spacing below legend */
+            font-size: 11px;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        .legend-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 4px;
+            margin: 1px 0;
+        }
+        .legend-label {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+        }
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+            flex-shrink: 0;
+        }
+        .legend-name {
+            color: #374151;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .legend-percentage {
+            color: #6b7280;
+            font-weight: 600;
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+        
+        .solution {
+            grid-column: 1 / -1;
+            background: #dcfce7;
+            color: #166534;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="test-container">
+        <h1>✅ Custom Legend Solution</h1>
+        
+        <div class="solution">
+            <strong>Problem Solved:</strong> Truncated legends replaced with custom HTML layout.<br>
+            <strong>Benefits:</strong> Left-aligned names, right-aligned percentages, no truncation!
+        </div>
+        
+        <div class="chart-container">
+            <h3>Conservative Portfolio</h3>
+            <div class="chart-wrapper">
+                <canvas id="conservativeChart"></canvas>
+            </div>
+            <div class="chart-legend" id="conservativeLegend"></div>
+            <p style="margin-top: 15px; color: #64748b; font-size: 0.9rem;">
+                Lower volatility, steady growth. Ideal for capital preservation and near-term goals.
+            </p>
+        </div>
+        
+        <div class="chart-container">
+            <h3>Aggressive Portfolio</h3>
+            <div class="chart-wrapper">
+                <canvas id="aggressiveChart"></canvas>
+            </div>
+            <div class="chart-legend" id="aggressiveLegend"></div>
+            <p style="margin-top: 15px; color: #64748b; font-size: 0.9rem;">
+                Higher risk, higher potential returns. Best for long-term growth objectives.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Asset names and colors
+        const assetNames = {
+            'VTI': 'US Total Market',
+            'VTIAX': 'International Stocks',
+            'BND': 'US Bonds',
+            'GLD': 'Gold ETF',
+            'QQQ': 'Technology (NASDAQ)'
+        };
+
+        const assetColors = {
+            'VTI': '#4f46e5',     // US Total Market - Indigo
+            'VTIAX': '#059669',   // International - Emerald  
+            'BND': '#dc2626',     // Bonds - Red
+            'GLD': '#eab308',     // Gold - Yellow
+            'QQQ': '#0ea5e9'      // Technology - Sky
+        };
+
+        // Portfolio data
+        const portfolios = {
+            conservative: {
+                'BND': 0.60,    // US Bonds
+                'VTIAX': 0.165, // International Stocks  
+                'VTI': 0.135,   // US Total Market
+                'GLD': 0.10     // Gold ETF
+            },
+            aggressive: {
+                'QQQ': 0.70,    // Technology (NASDAQ)
+                'GLD': 0.15,    // Gold ETF
+                'VTI': 0.103,   // US Total Market  
+                'BND': 0.047    // US Bonds
+            }
+        };
+
+        // Create charts and custom legends
+        function createPortfolioChart(canvasId, legendId, allocation) {
+            // Prepare chart data
+            const chartData = [];
+            const chartLabels = [];
+            const chartColors = [];
+            
+            Object.entries(allocation).forEach(([asset, weight]) => {
+                if (weight > 0.001) {
+                    chartData.push(weight * 100);
+                    chartLabels.push(assetNames[asset] || asset);
+                    chartColors.push(assetColors[asset] || '#64748b');
+                }
+            });
+
+            // Create Chart.js chart (no legend)
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        data: chartData,
+                        backgroundColor: chartColors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }, // Disable Chart.js legend
+                        tooltip: { enabled: false }  // Disable tooltips
+                    },
+                    elements: { arc: { borderWidth: 2 } },
+                    layout: { padding: { top: 10, bottom: 5, left: 5, right: 5 } }
+                }
+            });
+
+            // Create custom HTML legend
+            createCustomLegend(legendId, allocation);
+        }
+
+        function createCustomLegend(legendId, allocation) {
+            const legendContainer = document.getElementById(legendId);
+            
+            let legendHTML = '';
+            const validAssets = Object.entries(allocation)
+                .filter(([asset, weight]) => weight > 0.001)
+                .sort(([,a], [,b]) => b - a); // Sort by weight descending
+
+            validAssets.forEach(([asset, weight]) => {
+                const color = assetColors[asset] || '#64748b';
+                const name = assetNames[asset] || asset;
+                const percentage = (weight * 100).toFixed(1) + '%';
+                
+                legendHTML += `
+                    <div class="legend-item">
+                        <div class="legend-label">
+                            <div class="legend-dot" style="background-color: ${color};"></div>
+                            <span class="legend-name">${name}</span>
+                        </div>
+                        <span class="legend-percentage">${percentage}</span>
+                    </div>
+                `;
+            });
+
+            legendContainer.innerHTML = legendHTML;
+        }
+
+        // Initialize charts
+        createPortfolioChart('conservativeChart', 'conservativeLegend', portfolios.conservative);
+        createPortfolioChart('aggressiveChart', 'aggressiveLegend', portfolios.aggressive);
+
+        console.log('✅ Custom legend solution working perfectly!');
+        console.log('- No truncation issues');
+        console.log('- Left-aligned asset names');  
+        console.log('- Right-aligned percentages');
+        console.log('- Clean, professional layout');
+    </script>
+</body>
+</html>

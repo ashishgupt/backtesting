@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Regime Analyzer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 2rem 0;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .feature-badges {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px 10px 0 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: #666;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            min-height: 600px;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            margin-top: 2rem;
+        }
+
+        .regime-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .regime-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .regime-description {
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .confidence-bar {
+            background: rgba(255, 255, 255, 0.2);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .confidence-fill {
+            background: white;
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .indicators-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .indicator-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .indicator-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .indicator-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .historical-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .historical-table th,
+        .historical-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .historical-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .regime-bull { color: #28a745; }
+        .regime-bear { color: #dc3545; }
+        .regime-volatile { color: #ffc107; }
+        .regime-sideways { color: #6c757d; }
+        .regime-crisis { color: #6f42c1; }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 2rem 0;
+        }
+
+        .recommendations-list {
+            margin-top: 1rem;
+        }
+
+        .recommendation-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .recommendation-category {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .recommendation-text {
+            color: #666;
+            margin-bottom: 0.25rem;
+        }
+
+        .recommendation-rationale {
+            color: #888;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid #f5c6cb;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 0.5rem;
+                margin: 1rem auto;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                border-radius: 0;
+            }
+            
+            .indicators-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Market Regime Analyzer</h1>
+        <div class="subtitle">AI-Powered Market Regime Detection & Portfolio Intelligence</div>
+        <div class="feature-badges">
+            <span class="badge">Real-Time Detection</span>
+            <span class="badge">Historical Analysis</span>
+            <span class="badge">Strategy Recommendations</span>
+            <span class="badge">Performance Attribution</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('current-regime')">Current Regime</button>
+            <button class="tab" onclick="showTab('historical-analysis')">Historical Analysis</button>
+            <button class="tab" onclick="showTab('recommendations')">Recommendations</button>
+            <button class="tab" onclick="showTab('indicators')">Raw Indicators</button>
+        </div>
+
+        <div class="tab-content">
+            <!-- Current Regime Tab -->
+            <div id="current-regime" class="tab-panel active">
+                <div class="form-section">
+                    <h3>Current Regime Detection</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div class="form-group">
+                            <label for="lookback-days">Lookback Period (Days)</label>
+                            <select id="lookback-days">
+                                <option value="63">3 Months (63 days)</option>
+                                <option value="126">6 Months (126 days)</option>
+                                <option value="252" selected>1 Year (252 days)</option>
+                                <option value="504">2 Years (504 days)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="detectCurrentRegime()" id="detect-btn">Detect Current Regime</button>
+                </div>
+
+                <div class="loading" id="current-loading">
+                    <div class="spinner"></div>
+                    <div>Analyzing market conditions...</div>
+                </div>
+
+                <div id="current-results" class="results-section"></div>
+            </div>
+
+            <!-- Historical Analysis Tab -->
+            <div id="historical-analysis" class="tab-panel">
+                <div class="form-section">
+                    <h3>Historical Regime Analysis</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div class="form-group">
+                            <label for="historical-months">Analysis Period (Months)</label>
+                            <select id="historical-months">
+                                <option value="12">1 Year</option>
+                                <option value="24">2 Years</option>
+                                <option value="36" selected>3 Years</option>
+                                <option value="60">5 Years</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="window-days">Detection Window (Days)</label>
+                            <select id="window-days">
+                                <option value="63">63 days</option>
+                                <option value="126" selected>126 days</option>
+                                <option value="252">252 days</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="analyzeHistoricalRegimes()" id="historical-btn">Analyze Historical Regimes</button>
+                </div>
+
+                <div class="loading" id="historical-loading">
+                    <div class="spinner"></div>
+                    <div>Processing historical regime patterns...</div>
+                </div>
+
+                <div id="historical-results" class="results-section"></div>
+            </div>            <!-- Recommendations Tab -->
+            <div id="recommendations" class="tab-panel">
+                <div class="form-section">
+                    <h3>Portfolio Recommendations</h3>
+                    <div class="form-group">
+                        <label for="current-portfolio">Current Portfolio Allocation</label>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
+                            <div>
+                                <label>VTI (US Total Market) %</label>
+                                <input type="number" id="vti-allocation" min="0" max="100" step="0.1" value="40.0">
+                            </div>
+                            <div>
+                                <label>VTIAX (International) %</label>
+                                <input type="number" id="vtiax-allocation" min="0" max="100" step="0.1" value="20.0">
+                            </div>
+                            <div>
+                                <label>BND (Bonds) %</label>
+                                <input type="number" id="bnd-allocation" min="0" max="100" step="0.1" value="30.0">
+                            </div>
+                            <div>
+                                <label>VNQ (REITs) %</label>
+                                <input type="number" id="vnq-allocation" min="0" max="100" step="0.1" value="5.0">
+                            </div>
+                            <div>
+                                <label>GLD (Gold) %</label>
+                                <input type="number" id="gld-allocation" min="0" max="100" step="0.1" value="3.0">
+                            </div>
+                            <div>
+                                <label>VWO (Emerging Markets) %</label>
+                                <input type="number" id="vwo-allocation" min="0" max="100" step="0.1" value="1.5">
+                            </div>
+                            <div>
+                                <label>QQQ (Tech/Growth) %</label>
+                                <input type="number" id="qqq-allocation" min="0" max="100" step="0.1" value="0.5">
+                            </div>
+                        </div>
+                        <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #666;">
+                            Total: <span id="total-allocation">100.0</span>% 
+                            <span id="allocation-warning" style="color: #dc3545; display: none;">⚠ Must sum to 100%</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="risk-tolerance">Risk Tolerance</label>
+                        <select id="risk-tolerance">
+                            <option value="conservative">Conservative</option>
+                            <option value="balanced" selected>Balanced</option>
+                            <option value="aggressive">Aggressive</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="getRecommendations()" id="recommend-btn">Get Regime-Aware Recommendations</button>
+                </div>
+
+                <div class="loading" id="recommendations-loading">
+                    <div class="spinner"></div>
+                    <div>Generating regime-aware recommendations...</div>
+                </div>
+
+                <div id="recommendations-results" class="results-section"></div>
+            </div>
+
+            <!-- Raw Indicators Tab -->
+            <div id="indicators" class="tab-panel">
+                <div class="form-section">
+                    <h3>Raw Regime Indicators</h3>
+                    <div class="form-group">
+                        <label for="indicator-lookback">Lookback Period (Days)</label>
+                        <select id="indicator-lookback">
+                            <option value="63">3 Months</option>
+                            <option value="126">6 Months</option>
+                            <option value="252" selected>1 Year</option>
+                            <option value="504">2 Years</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="getIndicators()" id="indicators-btn">Calculate Indicators</button>
+                </div>
+
+                <div class="loading" id="indicators-loading">
+                    <div class="spinner"></div>
+                    <div>Calculating regime indicators...</div>
+                </div>
+
+                <div id="indicators-results" class="results-section"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab functionality
+        function showTab(tabName) {
+            // Hide all tab panels
+            const panels = document.querySelectorAll('.tab-panel');
+            panels.forEach(panel => panel.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab panel
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // Portfolio allocation tracking
+        function updateAllocationTotal() {
+            const allocations = [
+                'vti-allocation', 'vtiax-allocation', 'bnd-allocation',
+                'vnq-allocation', 'gld-allocation', 'vwo-allocation', 'qqq-allocation'
+            ];
+            
+            let total = 0;
+            allocations.forEach(id => {
+                const value = parseFloat(document.getElementById(id).value) || 0;
+                total += value;
+            });
+            
+            document.getElementById('total-allocation').textContent = total.toFixed(1);
+            
+            const warning = document.getElementById('allocation-warning');
+            if (Math.abs(total - 100) > 0.1) {
+                warning.style.display = 'inline';
+            } else {
+                warning.style.display = 'none';
+            }
+        }
+
+        // Add event listeners for allocation inputs
+        document.addEventListener('DOMContentLoaded', function() {
+            const allocationInputs = [
+                'vti-allocation', 'vtiax-allocation', 'bnd-allocation',
+                'vnq-allocation', 'gld-allocation', 'vwo-allocation', 'qqq-allocation'
+            ];
+            
+            allocationInputs.forEach(id => {
+                document.getElementById(id).addEventListener('input', updateAllocationTotal);
+            });
+        });
+
+        // API Functions
+        async function detectCurrentRegime() {
+            const loadingElement = document.getElementById('current-loading');
+            const resultsElement = document.getElementById('current-results');
+            const button = document.getElementById('detect-btn');
+            
+            try {
+                // Show loading state
+                loadingElement.style.display = 'block';
+                resultsElement.innerHTML = '';
+                button.disabled = true;
+                
+                const lookbackDays = document.getElementById('lookback-days').value;
+                
+                const response = await fetch('/api/regime/detect-current', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        lookback_days: parseInt(lookbackDays),
+                        include_historical: false
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                displayCurrentRegimeResults(data);
+                
+            } catch (error) {
+                console.error('Error detecting current regime:', error);
+                resultsElement.innerHTML = `
+                    <div class="error-message">
+                        Error detecting current regime: ${error.message}
+                    </div>
+                `;
+            } finally {
+                loadingElement.style.display = 'none';
+                button.disabled = false;
+            }
+        }
+
+        function displayCurrentRegimeResults(data) {
+            const resultsElement = document.getElementById('current-results');
+            
+            // Get regime color class
+            const regimeColorClass = getRegimeColorClass(data.regime_type);
+            
+            resultsElement.innerHTML = `
+                <div class="regime-card">
+                    <div class="regime-title ${regimeColorClass}">${data.regime_name}</div>
+                    <div class="regime-description">${data.regime_description}</div>
+                    
+                    <div style="margin: 1rem 0;">
+                        <div style="font-weight: 600; margin-bottom: 0.5rem;">
+                            Confidence: ${(data.confidence_score * 100).toFixed(1)}%
+                        </div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${data.confidence_score * 100}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem;">
+                        <div style="font-weight: 600; margin-bottom: 0.5rem;">Supporting Factors:</div>
+                        <ul style="margin-left: 1rem;">
+                            ${data.supporting_factors.map(factor => `<li>${factor}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="indicators-grid">
+                    ${generateIndicatorCards(data.key_indicators)}
+                </div>
+            `;
+        }
+
+        async function analyzeHistoricalRegimes() {
+            const loadingElement = document.getElementById('historical-loading');
+            const resultsElement = document.getElementById('historical-results');
+            const button = document.getElementById('historical-btn');
+            
+            try {
+                loadingElement.style.display = 'block';
+                resultsElement.innerHTML = '';
+                button.disabled = true;
+                
+                const lookbackMonths = document.getElementById('historical-months').value;
+                const windowDays = document.getElementById('window-days').value;
+                
+                const response = await fetch(`/api/regime/historical?lookback_months=${lookbackMonths}&window_days=${windowDays}&step_days=21`, {
+                    method: 'GET'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                displayHistoricalResults(data);
+                
+            } catch (error) {
+                console.error('Error analyzing historical regimes:', error);
+                resultsElement.innerHTML = `
+                    <div class="error-message">
+                        Error analyzing historical regimes: ${error.message}
+                    </div>
+                `;
+            } finally {
+                loadingElement.style.display = 'none';
+                button.disabled = false;
+            }
+        }
+
+        function displayHistoricalResults(data) {
+            const resultsElement = document.getElementById('historical-results');
+            
+            // Summary statistics
+            let summaryHtml = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div class="indicator-card">
+                        <div class="indicator-title">Analysis Period</div>
+                        <div class="indicator-value">${data.regime_summary.analysis_period_days} days</div>
+                    </div>
+                    <div class="indicator-card">
+                        <div class="indicator-title">Total Periods</div>
+                        <div class="indicator-value">${data.regime_summary.total_periods}</div>
+                    </div>
+                    <div class="indicator-card">
+                        <div class="indicator-title">Regime Transitions</div>
+                        <div class="indicator-value">${data.regime_summary.transition_count}</div>
+                    </div>
+                    <div class="indicator-card">
+                        <div class="indicator-title">Avg Confidence</div>
+                        <div class="indicator-value">${(data.regime_summary.average_confidence * 100).toFixed(1)}%</div>
+                    </div>
+                </div>
+            `;
+            
+            // Regime distribution
+            if (data.regime_summary.regime_distribution) {
+                summaryHtml += `
+                    <div style="margin-bottom: 2rem;">
+                        <h3>Regime Distribution</h3>
+                        <div class="indicators-grid">
+                            ${Object.entries(data.regime_summary.regime_distribution).map(([regime, count]) => `
+                                <div class="indicator-card">
+                                    <div class="indicator-title ${getRegimeColorClass(regime)}">${formatRegimeName(regime)}</div>
+                                    <div class="indicator-value">${count} periods</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Recent regime history table
+            summaryHtml += `
+                <div>
+                    <h3>Recent Regime History</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="historical-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Regime</th>
+                                    <th>Confidence</th>
+                                    <th>3M Momentum</th>
+                                    <th>Volatility %ile</th>
+                                    <th>Risk Sentiment</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.regime_history.slice(-20).reverse().map(regime => `
+                                    <tr>
+                                        <td>${new Date(regime.date).toLocaleDateString()}</td>
+                                        <td class="${getRegimeColorClass(regime.regime_type)}">${regime.regime_name}</td>
+                                        <td>${(regime.confidence * 100).toFixed(1)}%</td>
+                                        <td>${(regime.momentum_3m * 100).toFixed(1)}%</td>
+                                        <td>${(regime.volatility_percentile * 100).toFixed(0)}%</td>
+                                        <td>${regime.risk_regime}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            resultsElement.innerHTML = summaryHtml;
+        }
+
+        async function getRecommendations() {
+            const loadingElement = document.getElementById('recommendations-loading');
+            const resultsElement = document.getElementById('recommendations-results');
+            const button = document.getElementById('recommend-btn');
+            
+            try {
+                loadingElement.style.display = 'block';
+                resultsElement.innerHTML = '';
+                button.disabled = true;
+                
+                // Get portfolio allocation
+                const portfolio = {
+                    'VTI': parseFloat(document.getElementById('vti-allocation').value) / 100,
+                    'VTIAX': parseFloat(document.getElementById('vtiax-allocation').value) / 100,
+                    'BND': parseFloat(document.getElementById('bnd-allocation').value) / 100,
+                    'VNQ': parseFloat(document.getElementById('vnq-allocation').value) / 100,
+                    'GLD': parseFloat(document.getElementById('gld-allocation').value) / 100,
+                    'VWO': parseFloat(document.getElementById('vwo-allocation').value) / 100,
+                    'QQQ': parseFloat(document.getElementById('qqq-allocation').value) / 100
+                };
+                
+                const riskTolerance = document.getElementById('risk-tolerance').value;
+                
+                const response = await fetch('/api/regime/recommendations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        current_portfolio: portfolio,
+                        risk_tolerance: riskTolerance
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                displayRecommendations(data);
+                
+            } catch (error) {
+                console.error('Error getting recommendations:', error);
+                resultsElement.innerHTML = `
+                    <div class="error-message">
+                        Error getting recommendations: ${error.message}
+                    </div>
+                `;
+            } finally {
+                loadingElement.style.display = 'none';
+                button.disabled = false;
+            }
+        }
+
+        function displayRecommendations(data) {
+            const resultsElement = document.getElementById('recommendations-results');
+            const currentRegime = data.current_regime;
+            
+            let html = `
+                <div class="regime-card">
+                    <div class="regime-title ${getRegimeColorClass(currentRegime.regime_type)}">
+                        Current Regime: ${currentRegime.regime_name}
+                    </div>
+                    <div class="regime-description">${currentRegime.regime_description}</div>
+                    <div style="margin-top: 1rem;">
+                        Confidence: ${(currentRegime.confidence_score * 100).toFixed(1)}%
+                    </div>
+                </div>
+            `;
+            
+            // Regime adjustments
+            if (data.regime_adjustments) {
+                const adj = data.regime_adjustments;
+                html += `
+                    <div style="margin: 2rem 0;">
+                        <h3>Regime-Based Adjustments</h3>
+                        <div class="indicators-grid">
+                            <div class="indicator-card">
+                                <div class="indicator-title">Equity Bias</div>
+                                <div class="indicator-value">${(adj.equity_bias * 100).toFixed(1)}%</div>
+                            </div>
+                            <div class="indicator-card">
+                                <div class="indicator-title">Volatility Target</div>
+                                <div class="indicator-value">${(adj.volatility_target * 100).toFixed(1)}%</div>
+                            </div>
+                            <div class="indicator-card">
+                                <div class="indicator-title">Rebalancing</div>
+                                <div class="indicator-value">${adj.rebalancing_frequency}</div>
+                            </div>
+                        </div>
+                        <div class="indicator-card" style="margin-top: 1rem;">
+                            <div class="indicator-title">Strategy Description</div>
+                            <div style="margin-top: 0.5rem; color: #666;">${adj.description}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Recommended changes
+            if (data.recommended_changes && Object.keys(data.recommended_changes).length > 0) {
+                html += `
+                    <div style="margin: 2rem 0;">
+                        <h3>Recommended Portfolio Changes</h3>
+                        <div class="indicators-grid">
+                            ${Object.entries(data.recommended_changes).map(([asset, change]) => `
+                                <div class="indicator-card">
+                                    <div class="indicator-title">${asset}</div>
+                                    <div class="indicator-value">
+                                        ${(change.current_weight * 100).toFixed(1)}% → ${(change.recommended_weight * 100).toFixed(1)}%
+                                        <div style="font-size: 0.8rem; color: ${change.change > 0 ? '#28a745' : '#dc3545'};">
+                                            ${change.change > 0 ? '+' : ''}${(change.change * 100).toFixed(1)}%
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Rebalancing guidance
+            if (data.rebalancing_guidance) {
+                const guidance = data.rebalancing_guidance;
+                html += `
+                    <div style="margin: 2rem 0;">
+                        <h3>Rebalancing Guidance</h3>
+                        <div class="indicators-grid">
+                            <div class="indicator-card">
+                                <div class="indicator-title">Frequency</div>
+                                <div class="indicator-value">${guidance.frequency}</div>
+                            </div>
+                            <div class="indicator-card">
+                                <div class="indicator-title">Threshold</div>
+                                <div class="indicator-value">${(guidance.threshold * 100).toFixed(1)}%</div>
+                            </div>
+                            <div class="indicator-card">
+                                <div class="indicator-title">Priority Assets</div>
+                                <div class="indicator-value">${guidance.priority_assets.join(', ')}</div>
+                            </div>
+                        </div>
+                        <div class="indicator-card" style="margin-top: 1rem;">
+                            <div class="indicator-title">Guidance</div>
+                            <div style="margin-top: 0.5rem; color: #666;">${guidance.guidance}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Risk management advice
+            if (data.risk_management_advice && data.risk_management_advice.length > 0) {
+                html += `
+                    <div style="margin: 2rem 0;">
+                        <h3>Risk Management Advice</h3>
+                        <ul style="margin-left: 1rem;">
+                            ${data.risk_management_advice.map(advice => `<li style="margin-bottom: 0.5rem;">${advice}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            // Monitoring suggestions
+            if (data.monitoring_suggestions && data.monitoring_suggestions.length > 0) {
+                html += `
+                    <div style="margin: 2rem 0;">
+                        <h3>Monitoring Suggestions</h3>
+                        <ul style="margin-left: 1rem;">
+                            ${data.monitoring_suggestions.map(suggestion => `<li style="margin-bottom: 0.5rem;">${suggestion}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            resultsElement.innerHTML = html;
+        }
+
+        async function getIndicators() {
+            const loadingElement = document.getElementById('indicators-loading');
+            const resultsElement = document.getElementById('indicators-results');
+            const button = document.getElementById('indicators-btn');
+            
+            try {
+                loadingElement.style.display = 'block';
+                resultsElement.innerHTML = '';
+                button.disabled = true;
+                
+                const lookbackDays = document.getElementById('indicator-lookback').value;
+                
+                const response = await fetch(`/api/regime/indicators?lookback_days=${lookbackDays}`, {
+                    method: 'GET'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                displayIndicators(data);
+                
+            } catch (error) {
+                console.error('Error getting indicators:', error);
+                resultsElement.innerHTML = `
+                    <div class="error-message">
+                        Error getting indicators: ${error.message}
+                    </div>
+                `;
+            } finally {
+                loadingElement.style.display = 'none';
+                button.disabled = false;
+            }
+        }
+
+        function displayIndicators(data) {
+            const resultsElement = document.getElementById('indicators-results');
+            
+            let html = `
+                <div style="margin-bottom: 2rem;">
+                    <h3>Regime Summary</h3>
+                    <div class="indicators-grid">
+                        <div class="indicator-card">
+                            <div class="indicator-title">Overall Regime</div>
+                            <div class="indicator-value ${getRegimeColorClass(data.regime_summary.overall_regime)}">
+                                ${formatRegimeName(data.regime_summary.overall_regime)}
+                            </div>
+                        </div>
+                        <div class="indicator-card">
+                            <div class="indicator-title">Confidence Score</div>
+                            <div class="indicator-value">${(data.regime_summary.confidence_score * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3>Raw Indicators</h3>
+                    <div class="indicators-grid">
+                        ${generateIndicatorCards(data.indicators)}
+                    </div>
+                </div>
+            `;
+            
+            resultsElement.innerHTML = html;
+        }
+
+        // Helper functions
+        function getRegimeColorClass(regimeType) {
+            const classMap = {
+                'bull_market': 'regime-bull',
+                'bear_market': 'regime-bear',
+                'volatile_bull': 'regime-volatile',
+                'sideways_market': 'regime-sideways',
+                'crisis_mode': 'regime-crisis'
+            };
+            return classMap[regimeType] || 'regime-sideways';
+        }
+
+        function formatRegimeName(regimeType) {
+            const nameMap = {
+                'bull_market': 'Bull Market',
+                'bear_market': 'Bear Market',
+                'volatile_bull': 'Volatile Bull',
+                'sideways_market': 'Sideways Market',
+                'crisis_mode': 'Crisis Mode'
+            };
+            return nameMap[regimeType] || regimeType.replace('_', ' ');
+        }
+
+        function generateIndicatorCards(indicators) {
+            if (!indicators || Object.keys(indicators).length === 0) {
+                return '<div class="indicator-card"><div class="indicator-title">No indicators available</div></div>';
+            }
+            
+            return Object.entries(indicators).map(([key, value]) => {
+                let displayValue = value;
+                
+                // Format different types of values
+                if (typeof value === 'number') {
+                    if (key.includes('percentile') || key.includes('correlation')) {
+                        displayValue = `${(value * 100).toFixed(1)}%`;
+                    } else if (key.includes('momentum') || key.includes('spread')) {
+                        displayValue = `${(value * 100).toFixed(2)}%`;
+                    } else if (key.includes('volatility') && !key.includes('regime')) {
+                        displayValue = `${(value * 100).toFixed(1)}%`;
+                    } else if (value > -1 && value < 1) {
+                        displayValue = value.toFixed(3);
+                    } else {
+                        displayValue = value.toFixed(2);
+                    }
+                } else if (typeof value === 'string') {
+                    displayValue = value.replace('_', ' ').toUpperCase();
+                }
+                
+                return `
+                    <div class="indicator-card">
+                        <div class="indicator-title">${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</div>
+                        <div class="indicator-value">${displayValue}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+    </script>
+</body>
+</html>

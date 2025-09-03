@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Pie Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 2rem;
+            background: #f3f4f6;
+        }
+        
+        .test-card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .pie-chart-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .pie-chart-canvas {
+            width: 200px !important;
+            height: 200px !important;
+        }
+        
+        .chart-legend {
+            flex: 1;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            margin-right: 0.5rem;
+        }
+        
+        .legend-text {
+            color: #374151;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h2>Portfolio Allocation Test</h2>
+        <div class="pie-chart-container">
+            <canvas id="test-chart" class="pie-chart-canvas"></canvas>
+            <div class="chart-legend" id="test-chart-legend"></div>
+        </div>
+    </div>
+
+    <script>
+        // Test data similar to what we expect from the portfolio optimizer
+        const testAllocations = [
+            ['VTI', 0.4],
+            ['VTIAX', 0.25],
+            ['BND', 0.2],
+            ['VNQ', 0.1],
+            ['GLD', 0.05]
+        ];
+        
+        function createPieChart(chartId, allocations) {
+            const canvas = document.getElementById(chartId);
+            const legendContainer = document.getElementById(`${chartId}-legend`);
+            
+            if (!canvas || !legendContainer) {
+                console.error('Chart elements not found:', chartId);
+                return;
+            }
+            
+            // Color palette for pie chart
+            const colors = [
+                '#4f46e5', // Indigo
+                '#7c3aed', // Violet
+                '#059669', // Emerald
+                '#dc2626', // Red
+                '#ea580c', // Orange
+                '#0d9488', // Teal
+                '#7c2d12', // Brown
+                '#374151', // Gray
+                '#be185d', // Pink
+                '#4338ca'  // Blue
+            ];
+            
+            const data = {
+                labels: allocations.map(([asset, _]) => asset),
+                datasets: [{
+                    data: allocations.map(([_, weight]) => (weight * 100).toFixed(1)),
+                    backgroundColor: colors.slice(0, allocations.length),
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    hoverOffset: 8
+                }]
+            };
+            
+            const config = {
+                type: 'pie',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false // We'll create our own legend
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    return `${label}: ${value}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            
+            new Chart(canvas, config);
+            
+            // Create custom legend
+            legendContainer.innerHTML = allocations.map(([asset, weight], index) => `
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: ${colors[index]}"></div>
+                    <div class="legend-text">${asset}: ${(weight * 100).toFixed(1)}%</div>
+                </div>
+            `).join('');
+        }
+        
+        // Create the test chart when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            createPieChart('test-chart', testAllocations);
+        });
+    </script>
+</body>
+</html>

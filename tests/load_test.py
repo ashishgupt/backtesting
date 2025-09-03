@@ -12,7 +12,7 @@ import random
 class PortfolioLoadTester:
     """Load testing suite for portfolio backtesting system"""
     
-    def __init__(self, base_url="http://127.0.0.1:8006"):
+    def __init__(self, base_url="http://127.0.0.1:8007"):
         self.base_url = base_url
         
     async def test_endpoint(self, session, endpoint, data=None, method="GET"):

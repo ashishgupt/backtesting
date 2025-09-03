@@ -1,0 +1,8 @@
+{
+  "current_savings": 50000,
+  "target_amount": 150000,
+  "time_horizon": 15,
+  "account_type": "tax_free",
+  "new_money_available": true,
+  "max_annual_contribution": 6000
+}

@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Portfolio Optimization with Analytics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 0.5rem 0.5rem 0 0;
+        }
+        
+        .content {
+            padding: 2rem;
+        }
+        
+        .form-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .form-section h2 {
+            margin-bottom: 1.5rem;
+            color: #1f2937;
+            font-size: 1.5rem;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+        
+        .form-group input,
+        .form-group select {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .form-help {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        
+        .optimize-btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .optimize-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+        }
+        
+        .optimize-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .results {
+            display: none;
+            margin-top: 2rem;
+        }
+        
+        .results-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .results-header h2 {
+            font-size: 2rem;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        
+        .results-tabs {
+            display: flex;
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 0.5rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0.25rem;
+        }
+        
+        .tab-btn.active {
+            background: white;
+            color: #4f46e5;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .portfolio-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+        
+        .portfolio-card:hover {
+            border-color: #4f46e5;
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.1);
+        }
+        
+        .portfolio-card h3 {
+            font-size: 1.5rem;
+            color: #1f2937;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .portfolio-card.conservative h3 { color: #059669; }
+        .portfolio-card.balanced h3 { color: #d97706; }
+        .portfolio-card.aggressive h3 { color: #dc2626; }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .metric {
+            text-align: center;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            display: block;
+        }
+        
+        .metric-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        
+        .allocation-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .allocation-section h4 {
+            margin-bottom: 1rem;
+            color: #374151;
+        }
+        
+        .pie-chart-container {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            min-height: 200px;
+        }
+        
+        .pie-chart-wrapper {
+            flex-shrink: 0;
+            width: 200px;
+            height: 200px;
+            position: relative;
+        }
+        
+        .pie-chart-canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        .chart-legend {
+            flex: 1;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            margin-right: 0.5rem;
+        }
+        
+        .legend-text {
+            color: #374151;
+            font-weight: 500;
+        }
+        
+        .target-achievement {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .analytics-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .analytics-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .analytics-card h4 {
+            font-size: 1.2rem;
+            color: #1f2937;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .analytics-card h4::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: #4f46e5;
+            border-radius: 2px;
+            margin-right: 0.75rem;
+        }
+        
+        .crisis-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .crisis-name {
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .crisis-decline {
+            font-weight: 600;
+        }
+        
+        .crisis-decline.good { color: #059669; }
+        .crisis-decline.moderate { color: #d97706; }
+        .crisis-decline.poor { color: #dc2626; }
+        
+        .recovery-badge {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .risk-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        
+        .risk-metric {
+            text-align: center;
+            padding: 0.75rem;
+            background: #f8fafc;
+            border-radius: 6px;
+        }
+        
+        .risk-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .risk-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .comparison-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .comparison-table tr:hover {
+            background: #f8fafc;
+        }
+        
+        .score-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .score-excellent {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .score-good {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .score-fair {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .recommendations {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .recommendations h5 {
+            color: #1e40af;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .recommendations ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .recommendations li {
+            color: #1e40af;
+            font-size: 0.875rem;
+            padding: 0.25rem 0;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+        
+        .recommendations li::before {
+            content: '•';
+            color: #3b82f6;
+            font-weight: bold;
+            position: absolute;
+            left: 0.5rem;
+        }
+        
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            body { padding: 0.5rem; }
+            .container { border-radius: 0; }
+            .content { padding: 1rem; }
+            .portfolio-grid { grid-template-columns: 1fr; }
+            .analytics-grid { grid-template-columns: 1fr; }
+            .metrics-grid { grid-template-columns: 1fr; }
+            .risk-metrics { grid-template-columns: 1fr; }
+            .results-tabs { flex-direction: column; }
+            .tab-btn { margin: 0.125rem; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Enhanced Portfolio Optimization</h1>
+            <p>AI-powered portfolio optimization with comprehensive analytics</p>
+            <div>
+                <span class="badge">Crisis Analysis</span>
+                <span class="badge">Rolling Returns</span>
+                <span class="badge">Risk Metrics</span>
+                <span class="badge">Recovery Analysis</span>
+            </div>
+        </div>
+        
+        <div class="content">
+            <!-- Input Form -->
+            <div class="form-section">
+                <h2>Portfolio Parameters</h2>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="currentSavings">Current Savings ($)</label>
+                        <input type="number" id="currentSavings" value="50000" min="1000" max="10000000">
+                        <div class="form-help">Your current investment amount</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="targetAmount">Target Amount ($)</label>
+                        <input type="number" id="targetAmount" value="500000" min="10000" max="50000000">
+                        <div class="form-help">Your financial goal (optional)</div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="timeHorizon">Time Horizon (years)</label>
+                        <input type="number" id="timeHorizon" value="15" min="1" max="50">
+                        <div class="form-help">Investment time period</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="accountType">Account Type</label>
+                        <select id="accountType">
+                            <option value="tax_free">Tax-Free (Roth IRA, HSA)</option>
+                            <option value="tax_deferred">Tax-Deferred (401k, Traditional IRA)</option>
+                            <option value="taxable">Taxable Account</option>
+                        </select>
+                        <div class="form-help">Affects rebalancing strategy</div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newMoneyAvailable">New Money Available</label>
+                        <select id="newMoneyAvailable">
+                            <option value="true">Yes - I can add money regularly</option>
+                            <option value="false">No - One-time investment</option>
+                        </select>
+                        <div class="form-help">Regular contributions enable natural rebalancing</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="maxContribution">Max Annual Contribution ($)</label>
+                        <input type="number" id="maxContribution" value="12000" min="0" max="100000">
+                        <div class="form-help">Maximum yearly addition (if available)</div>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button class="optimize-btn" onclick="optimizePortfolio()">
+                        🚀 Optimize Portfolio with Analytics
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Error Message -->
+            <div class="error-message" id="errorMessage"></div>
+            
+            <!-- Loading State -->
+            <div class="loading" id="loadingState">
+                <div class="loading-spinner"></div>
+                <h3>Optimizing portfolios with comprehensive analytics...</h3>
+                <p>Running crisis analysis, rolling period consistency, and risk calculations</p>
+            </div>
+            
+            <!-- Results -->
+            <div class="results" id="resultsSection">
+                <div class="results-header">
+                    <h2>Your Optimized Portfolios</h2>
+                    <p>Three strategies with comprehensive historical analysis</p>
+                </div>
+                
+                <!-- Results Tabs -->
+                <div class="results-tabs">
+                    <button class="tab-btn active" onclick="showTab('overview')">Portfolio Overview</button>
+                    <button class="tab-btn" onclick="showTab('analytics')">Analytics Dashboard</button>
+                    <button class="tab-btn" onclick="showTab('comparison')">Strategy Comparison</button>
+                </div>
+                
+                <!-- Overview Tab -->
+                <div class="tab-content active" id="overview-tab">
+                    <div class="portfolio-grid" id="portfolioCards">
+                        <!-- Portfolio cards will be dynamically generated -->
+                    </div>
+                </div>
+                
+                <!-- Analytics Tab -->
+                <div class="tab-content" id="analytics-tab">
+                    <div class="analytics-section">
+                        <h3 style="margin-bottom: 1.5rem; color: #1f2937;">Comprehensive Analytics Dashboard</h3>
+                        <div class="analytics-grid" id="analyticsGrid">
+                            <!-- Analytics cards will be dynamically generated -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Comparison Tab -->
+                <div class="tab-content" id="comparison-tab">
+                    <div class="analytics-section">
+                        <h3 style="margin-bottom: 1.5rem; color: #1f2937;">Strategy Comparison</h3>
+                        <table class="comparison-table" id="comparisonTable">
+                            <!-- Comparison table will be dynamically generated -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let optimizationResults = [];
+        
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        async function optimizePortfolio() {
+            const loadingEl = document.getElementById('loadingState');
+            const resultsEl = document.getElementById('resultsSection');
+            const errorEl = document.getElementById('errorMessage');
+            const button = document.querySelector('.optimize-btn');
+            
+            // Hide previous results and errors
+            loadingEl.style.display = 'block';
+            resultsEl.style.display = 'none';
+            errorEl.style.display = 'none';
+            button.disabled = true;
+            
+            try {
+                // Collect form data
+                const requestData = {
+                    current_savings: parseFloat(document.getElementById('currentSavings').value),
+                    target_amount: parseFloat(document.getElementById('targetAmount').value) || null,
+                    time_horizon: parseInt(document.getElementById('timeHorizon').value),
+                    account_type: document.getElementById('accountType').value,
+                    new_money_available: document.getElementById('newMoneyAvailable').value === 'true',
+                    max_annual_contribution: parseFloat(document.getElementById('maxContribution').value) || null
+                };
+                
+                // Make API call to enhanced optimization endpoint
+                const response = await fetch('/api/enhanced/portfolio/optimize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+                }
+                
+                const results = await response.json();
+                optimizationResults = results;
+                
+                // Display results
+                displayResults(results);
+                
+                // Hide loading, show results
+                loadingEl.style.display = 'none';
+                resultsEl.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Optimization error:', error);
+                errorEl.textContent = `Error optimizing portfolio: ${error.message}`;
+                errorEl.style.display = 'block';
+                loadingEl.style.display = 'none';
+            } finally {
+                button.disabled = false;
+            }
+        }
+        
+        function displayResults(results) {
+            displayPortfolioCards(results);
+            displayAnalyticsDashboard(results);
+            displayComparisonTable(results);
+        }
+        
+        function displayPortfolioCards(results) {
+            const container = document.getElementById('portfolioCards');
+            container.innerHTML = '';
+            
+            results.forEach((portfolio, index) => {
+                const card = createPortfolioCard(portfolio, index);
+                container.appendChild(card);
+            });
+        }
+        
+        function createPortfolioCard(portfolio, index) {
+            const div = document.createElement('div');
+            div.className = `portfolio-card ${portfolio.strategy.toLowerCase()}`;
+            
+            const sortedAllocations = Object.entries(portfolio.allocation)
+                .filter(([_, weight]) => weight > 0.01)
+                .sort(([_, a], [__, b]) => b - a);
+            
+            const chartId = `chart-${index}`;
+            
+            div.innerHTML = `
+                <h3>${portfolio.strategy.toUpperCase()}</h3>
+                
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <span class="metric-value">${(portfolio.expected_return * 100).toFixed(1)}%</span>
+                        <span class="metric-label">Expected Return</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">${(portfolio.volatility * 100).toFixed(1)}%</span>
+                        <span class="metric-label">Volatility</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">${portfolio.sharpe_ratio.toFixed(2)}</span>
+                        <span class="metric-label">Sharpe Ratio</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">${portfolio.overall_crisis_score.toFixed(0)}/100</span>
+                        <span class="metric-label">Crisis Score</span>
+                    </div>
+                </div>
+                
+                <div class="allocation-section">
+                    <h4>Asset Allocation</h4>
+                    <div class="pie-chart-container">
+                        <div class="pie-chart-wrapper">
+                            <canvas id="${chartId}" class="pie-chart-canvas"></canvas>
+                        </div>
+                        <div class="chart-legend" id="${chartId}-legend"></div>
+                    </div>
+                </div>
+                
+                <div class="target-achievement">
+                    ${(portfolio.target_achievement_probability * 100).toFixed(0)}% chance to reach target
+                    <br>
+                    Expected value: $${portfolio.expected_final_value.toLocaleString()}
+                </div>
+                
+                <div class="recommendations">
+                    <h5>Account Recommendations</h5>
+                    <ul>
+                        ${portfolio.account_specific_notes.slice(0, 2).map(note => 
+                            `<li>${note}</li>`
+                        ).join('')}
+                    </ul>
+                </div>
+            `;
+            
+            // Create pie chart immediately after DOM insertion
+            setTimeout(() => {
+                if (typeof Chart !== 'undefined') {
+                    createPieChart(chartId, sortedAllocations);
+                } else {
+                    console.error('Chart.js not available for', chartId);
+                    document.getElementById(`${chartId}-legend`).innerHTML = 
+                        '<p style="color: red; font-size: 0.8rem;">Chart.js not loaded</p>';
+                }
+            }, 100);
+            
+            return div;
+        }
+        
+        function createPieChart(chartId, allocations) {
+            
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js not loaded');
+                return;
+            }
+            
+            const canvas = document.getElementById(chartId);
+            const legendDiv = document.getElementById(`${chartId}-legend`);
+            
+            if (!canvas || !legendDiv) {
+                console.error('Canvas or legend not found:', chartId);
+                return;
+            }
+            
+            const colors = [
+                '#2563eb', // Professional blue (similar to Mint, Personal Capital)
+                '#059669', // Emerald green (financial growth color)
+                '#dc2626', // Red (loss/risk color)
+                '#ea580c', // Orange (moderate risk)
+                '#7c3aed', // Purple (diversification)
+                '#0891b2', // Cyan (stability)
+                '#be185d', // Pink (alternative assets)
+                '#374151', // Gray (conservative)
+                '#0d9488', // Teal (balanced)
+                '#7c2d12'  // Brown (commodities)
+            ];
+            
+            try {
+                new Chart(canvas, {
+                    type: 'doughnut', // Changed from 'pie' to 'doughnut' for modern look
+                    data: {
+                        labels: allocations.map(([asset, _]) => asset),
+                        datasets: [{
+                            data: allocations.map(([_, weight]) => (weight * 100).toFixed(1)),
+                            backgroundColor: colors.slice(0, allocations.length),
+                            borderColor: '#ffffff',
+                            borderWidth: 3, // Increased for better separation
+                            hoverBorderWidth: 4,
+                            hoverBackgroundColor: colors.slice(0, allocations.length).map(color => 
+                                color.replace('rgb(', 'rgba(').replace(')', ', 0.8)')
+                            )
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        aspectRatio: 1,
+                        cutout: '50%', // Creates the donut hole
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleColor: '#ffffff',
+                                bodyColor: '#ffffff',
+                                borderColor: '#ffffff',
+                                borderWidth: 1,
+                                cornerRadius: 8,
+                                displayColors: true,
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.label}: ${context.parsed}%`;
+                                    }
+                                }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'point'
+                        },
+                        layout: {
+                            padding: 10
+                        }
+                    }
+                });
+                
+                // Create custom legend
+                legendDiv.innerHTML = allocations.map(([asset, weight], index) => `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: ${colors[index]}"></div>
+                        <div class="legend-text">${asset}: ${(weight * 100).toFixed(1)}%</div>
+                    </div>
+                `).join('');
+                
+                console.log('✅ Chart created successfully:', chartId);
+                
+            } catch (error) {
+                console.error('❌ Error creating chart:', chartId, error);
+                legendDiv.innerHTML = `<p style="color: red; font-size: 0.8rem;">Chart error: ${error.message}</p>`;
+            }
+        }
+        
+        function displayAnalyticsDashboard(results) {
+            const container = document.getElementById('analyticsGrid');
+            container.innerHTML = '';
+            
+            results.forEach(portfolio => {
+                // Crisis Analysis Card
+                const crisisCard = createCrisisAnalysisCard(portfolio);
+                container.appendChild(crisisCard);
+                
+                // Risk Metrics Card  
+                const riskCard = createRiskMetricsCard(portfolio);
+                container.appendChild(riskCard);
+            });
+        }
+        
+        function createCrisisAnalysisCard(portfolio) {
+            const div = document.createElement('div');
+            div.className = 'analytics-card';
+            
+            div.innerHTML = `
+                <h4>🛡️ ${portfolio.strategy.toUpperCase()} - Crisis Resilience</h4>
+                <div style="margin-bottom: 1rem;">
+                    <strong>Overall Crisis Score: ${portfolio.overall_crisis_score.toFixed(0)}/100</strong>
+                </div>
+                
+                ${portfolio.crisis_analysis.map(crisis => `
+                    <div class="crisis-item">
+                        <div>
+                            <div class="crisis-name">${crisis.crisis_name}</div>
+                            <span class="recovery-badge">
+                                ${crisis.recovery_time_months ? 
+                                    `${crisis.recovery_time_months.toFixed(1)}mo recovery` : 
+                                    'Recovery pending'
+                                }
+                            </span>
+                        </div>
+                        <div class="crisis-decline ${getCrisisDeclineClass(crisis.portfolio_decline)}">
+                            ${crisis.portfolio_decline.toFixed(1)}%
+                        </div>
+                    </div>
+                `).join('')}
+                
+                <div style="margin-top: 1rem; font-size: 0.875rem; color: #6b7280;">
+                    Crisis performance vs market during major downturns
+                </div>
+            `;
+            
+            return div;
+        }
+        
+        function createRiskMetricsCard(portfolio) {
+            const div = document.createElement('div');
+            div.className = 'analytics-card';
+            
+            div.innerHTML = `
+                <h4>📊 ${portfolio.strategy.toUpperCase()} - Risk Metrics</h4>
+                
+                <div class="risk-metrics">
+                    <div class="risk-metric">
+                        <div class="risk-value">${portfolio.risk_metrics.var_95.toFixed(2)}%</div>
+                        <div class="risk-label">95% VaR</div>
+                    </div>
+                    <div class="risk-metric">
+                        <div class="risk-value">${portfolio.risk_metrics.sortino_ratio.toFixed(2)}</div>
+                        <div class="risk-label">Sortino Ratio</div>
+                    </div>
+                    <div class="risk-metric">
+                        <div class="risk-value">${portfolio.avg_recovery_time_months.toFixed(1)}mo</div>
+                        <div class="risk-label">Avg Recovery</div>
+                    </div>
+                    <div class="risk-metric">
+                        <div class="risk-value">${portfolio.consistency_score.toFixed(0)}/100</div>
+                        <div class="risk-label">Consistency</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1rem; padding: 0.75rem; background: #f8fafc; border-radius: 6px;">
+                    <strong>Rebalancing:</strong> ${portfolio.optimal_rebalancing_frequency}<br>
+                    <strong>Expected Alpha:</strong> +${(portfolio.rebalancing_benefit * 100).toFixed(2)}% annually
+                </div>
+            `;
+            
+            return div;
+        }
+        
+        function displayComparisonTable(results) {
+            const table = document.getElementById('comparisonTable');
+            
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Strategy</th>
+                        <th>Expected Return</th>
+                        <th>Volatility</th>
+                        <th>Sharpe Ratio</th>
+                        <th>Crisis Score</th>
+                        <th>Consistency Score</th>
+                        <th>Target Achievement</th>
+                        <th>Final Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${results.map(portfolio => `
+                        <tr>
+                            <td><strong>${portfolio.strategy.toUpperCase()}</strong></td>
+                            <td>${(portfolio.expected_return * 100).toFixed(1)}%</td>
+                            <td>${(portfolio.volatility * 100).toFixed(1)}%</td>
+                            <td>${portfolio.sharpe_ratio.toFixed(2)}</td>
+                            <td>
+                                <span class="score-badge ${getScoreClass(portfolio.overall_crisis_score)}">
+                                    ${portfolio.overall_crisis_score.toFixed(0)}/100
+                                </span>
+                            </td>
+                            <td>
+                                <span class="score-badge ${getScoreClass(portfolio.consistency_score)}">
+                                    ${portfolio.consistency_score.toFixed(0)}/100
+                                </span>
+                            </td>
+                            <td>${(portfolio.target_achievement_probability * 100).toFixed(0)}%</td>
+                            <td>$${portfolio.expected_final_value.toLocaleString()}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+        }
+        
+        function getCrisisDeclineClass(decline) {
+            if (decline > -10) return 'good';
+            if (decline > -25) return 'moderate';
+            return 'poor';
+        }
+        
+        function getScoreClass(score) {
+            if (score >= 70) return 'score-excellent';
+            if (score >= 50) return 'score-good';
+            return 'score-fair';
+        }
+        
+    </script>
+    
+    <!-- Chart.js loaded before our code (research-proven solution) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+</body>
+</html>

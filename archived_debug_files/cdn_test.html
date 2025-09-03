@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart.js CDN Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .chart-container {
+            width: 400px;
+            height: 400px;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chart.js CDN Test</h1>
+    <div id="status" class="status">Loading...</div>
+    <div class="chart-container">
+        <canvas id="testChart"></canvas>
+    </div>
+
+    <!-- Use CDN instead of local file -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script>
+        console.log('Script executing...');
+        console.log('Document ready state:', document.readyState);
+        
+        function testChart() {
+            const statusDiv = document.getElementById('status');
+            console.log('Testing Chart availability:', typeof Chart);
+            
+            if (typeof Chart !== 'undefined') {
+                statusDiv.textContent = '✅ Chart.js loaded from CDN! Version: ' + Chart.version;
+                statusDiv.className = 'status success';
+                
+                // Create simple test chart
+                const ctx = document.getElementById('testChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Red', 'Blue', 'Yellow'],
+                        datasets: [{
+                            data: [300, 50, 100],
+                            backgroundColor: ['#ff6384', '#36a2eb', '#ffce56']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+                console.log('✅ Chart created successfully');
+            } else {
+                statusDiv.textContent = '❌ Chart.js failed to load from CDN';
+                statusDiv.className = 'status error';
+                console.error('Chart.js not available');
+            }
+        }
+        
+        // Try multiple approaches
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', testChart);
+        } else {
+            testChart();
+        }
+        
+        // Backup with window load
+        window.addEventListener('load', function() {
+            console.log('Window loaded, Chart available:', typeof Chart !== 'undefined');
+            if (typeof Chart === 'undefined') {
+                setTimeout(testChart, 1000); // Give it more time
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Rebalancing Fix</title>
+</head>
+<body>
+    <h1>Rebalancing API Test</h1>
+    <button onclick="testRebalancing()">Test Rebalancing Analysis</button>
+    <div id="results" style="margin-top: 20px; white-space: pre-wrap;"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8007';
+        
+        async function testRebalancing() {
+            const results = document.getElementById('results');
+            results.textContent = 'Testing rebalancing analysis...';
+            
+            try {
+                const allocationWeights = {
+                    "VTI": 0.60,
+                    "VTIAX": 0.20, 
+                    "BND": 0.20
+                };
+                
+                const response = await fetch(`${API_BASE}/api/rebalancing/compare-strategies`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        target_allocation: allocationWeights,
+                        methods: ['5_percent_threshold', 'quarterly', 'annual'],
+                        account_type: 'taxable',
+                        start_date: '2020-01-01',
+                        end_date: '2024-12-31',
+                        initial_value: 100000.0,
+                        annual_contribution: 0.0
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Rebalancing optimization failed');
+                
+                const data = await response.json();
+                
+                // Convert summary_comparison to strategy_comparison format expected by frontend
+                const strategies = Object.entries(data.summary_comparison || {}).map(([method, metrics]) => ({
+                    strategy_name: method.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                    net_return: metrics.annualized_return,
+                    annual_cost_savings: (metrics.cost_efficiency || 0),
+                    frequency: method === 'annual' ? 'Annual' : 
+                             method === 'quarterly' ? 'Quarterly' :
+                             method.includes('percent') ? 'Threshold-based' : 'Variable'
+                }));
+                
+                // Add strategy_comparison to data for compatibility with existing functions
+                data.strategy_comparison = strategies;
+                
+                // Find best strategy (highest net return)
+                const bestStrategy = strategies.reduce((best, current) => 
+                    current.net_return > best.net_return ? current : best
+                );
+                
+                results.innerHTML = `
+✅ SUCCESS! Rebalancing analysis working correctly:
+
+Raw API Response Keys: ${Object.keys(data).join(', ')}
+
+Converted Strategies:
+${strategies.map(s => `- ${s.strategy_name}: ${(s.net_return * 100).toFixed(2)}% return, $${Math.round(s.annual_cost_savings)} cost efficiency`).join('\n')}
+
+Best Strategy: ${bestStrategy.strategy_name}
+- Return: ${(bestStrategy.net_return * 100).toFixed(2)}%
+- Cost Efficiency: $${Math.round(bestStrategy.annual_cost_savings)}
+- Frequency: ${bestStrategy.frequency}
+
+🎉 The rebalancing fix is working correctly!
+                `.trim();
+                
+            } catch (error) {
+                results.textContent = `❌ ERROR: ${error.message}\n\nPlease check the server is running on port 8007`;
+                console.error('Rebalancing test failed:', error);
+            }
+        }
+    </script>
+</body>
+</html>

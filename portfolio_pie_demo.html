@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Pie Chart Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .portfolio-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+        
+        .portfolio-card {
+            background: #f8fafc;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .portfolio-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .portfolio-card.conservative {
+            border-color: #10b981;
+            background: linear-gradient(145deg, #ecfdf5 0%, #d1fae5 100%);
+        }
+        
+        .portfolio-card.balanced {
+            border-color: #3b82f6;
+            background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%);
+        }
+        
+        .portfolio-card.aggressive {
+            border-color: #ef4444;
+            background: linear-gradient(145deg, #fef2f2 0%, #fecaca 100%);
+        }
+        
+        .portfolio-card h3 {
+            color: #1f2937;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .metric {
+            text-align: center;
+        }
+        
+        .metric-value {
+            display: block;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        
+        .metric-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        
+        .allocation-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .allocation-section h4 {
+            margin-bottom: 1rem;
+            color: #374151;
+        }
+        
+        .pie-chart-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .pie-chart-canvas {
+            width: 200px !important;
+            height: 200px !important;
+        }
+        
+        .chart-legend {
+            flex: 1;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            margin-right: 0.5rem;
+        }
+        
+        .legend-text {
+            color: #374151;
+            font-weight: 500;
+        }
+        
+        .target-achievement {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Portfolio Allocation Demo</h1>
+            <p>Pie Chart Visualization for Top Holdings</p>
+        </div>
+        
+        <div class="portfolio-cards" id="portfolioCards">
+            <!-- Portfolio cards will be generated here -->
+        </div>
+    </div>
+
+    <script>
+        // Sample portfolio data
+        const samplePortfolios = [
+            {
+                strategy: "Conservative",
+                expected_return: 0.047,
+                volatility: 0.089,
+                sharpe_ratio: 0.42,
+                overall_crisis_score: 78,
+                allocation: {
+                    "BND": 0.45,
+                    "VTI": 0.30,
+                    "VTIAX": 0.15,
+                    "VNQ": 0.05,
+                    "GLD": 0.05
+                },
+                target_achievement_probability: 0.72,
+                expected_final_value: 850000
+            },
+            {
+                strategy: "Balanced", 
+                expected_return: 0.135,
+                volatility: 0.145,
+                sharpe_ratio: 0.89,
+                overall_crisis_score: 65,
+                allocation: {
+                    "VTI": 0.40,
+                    "VTIAX": 0.25,
+                    "BND": 0.20,
+                    "VNQ": 0.10,
+                    "GLD": 0.05
+                },
+                target_achievement_probability: 0.85,
+                expected_final_value: 1250000
+            },
+            {
+                strategy: "Aggressive",
+                expected_return: 0.153,
+                volatility: 0.187,
+                sharpe_ratio: 0.78,
+                overall_crisis_score: 52,
+                allocation: {
+                    "VTI": 0.45,
+                    "QQQ": 0.20,
+                    "VTIAX": 0.15,
+                    "VWO": 0.10,
+                    "VNQ": 0.06,
+                    "GLD": 0.04
+                },
+                target_achievement_probability: 0.91,
+                expected_final_value: 1450000
+            }
+        ];
+        
+        function createPortfolioCard(portfolio) {
+            const div = document.createElement('div');
+            div.className = `portfolio-card ${portfolio.strategy.toLowerCase()}`;
+            
+            // Get allocations sorted by weight
+            const sortedAllocations = Object.entries(portfolio.allocation)
+                .filter(([_, weight]) => weight > 0.01)
+                .sort(([_, a], [__, b]) => b - a);
+            
+            // Create unique chart ID
+            const chartId = `chart-${portfolio.strategy.toLowerCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            
+            div.innerHTML = `
+                <h3>${portfolio.strategy.toUpperCase()}</h3>
+                
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <span class="metric-value">${(portfolio.expected_return * 100).toFixed(1)}%</span>
+                        <span class="metric-label">Expected Return</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">${(portfolio.volatility * 100).toFixed(1)}%</span>
+                        <span class="metric-label">Volatility</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">${portfolio.sharpe_ratio.toFixed(2)}</span>
+                        <span class="metric-label">Sharpe Ratio</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">${portfolio.overall_crisis_score.toFixed(0)}/100</span>
+                        <span class="metric-label">Crisis Score</span>
+                    </div>
+                </div>
+                
+                <div class="allocation-section">
+                    <h4>Top Holdings</h4>
+                    <div class="pie-chart-container">
+                        <canvas id="${chartId}" class="pie-chart-canvas"></canvas>
+                        <div class="chart-legend" id="${chartId}-legend"></div>
+                    </div>
+                </div>
+                
+                <div class="target-achievement">
+                    ${(portfolio.target_achievement_probability * 100).toFixed(0)}% chance to reach target
+                    <br>
+                    Expected value: $${portfolio.expected_final_value.toLocaleString()}
+                </div>
+            `;
+            
+            // Create the pie chart after adding to DOM
+            setTimeout(() => {
+                createPieChart(chartId, sortedAllocations);
+            }, 100);
+            
+            return div;
+        }
+        
+        function createPieChart(chartId, allocations) {
+            const canvas = document.getElementById(chartId);
+            const legendContainer = document.getElementById(`${chartId}-legend`);
+            
+            if (!canvas || !legendContainer) {
+                console.error('Chart elements not found:', chartId);
+                return;
+            }
+            
+            // Color palette for pie chart
+            const colors = [
+                '#4f46e5', // Indigo
+                '#7c3aed', // Violet
+                '#059669', // Emerald
+                '#dc2626', // Red
+                '#ea580c', // Orange
+                '#0d9488', // Teal
+                '#7c2d12', // Brown
+                '#374151', // Gray
+                '#be185d', // Pink
+                '#4338ca'  // Blue
+            ];
+            
+            const data = {
+                labels: allocations.map(([asset, _]) => asset),
+                datasets: [{
+                    data: allocations.map(([_, weight]) => (weight * 100).toFixed(1)),
+                    backgroundColor: colors.slice(0, allocations.length),
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    hoverOffset: 8
+                }]
+            };
+            
+            const config = {
+                type: 'pie',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false // We'll create our own legend
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    return `${label}: ${value}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            
+            new Chart(canvas, config);
+            
+            // Create custom legend
+            legendContainer.innerHTML = allocations.map(([asset, weight], index) => `
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: ${colors[index]}"></div>
+                    <div class="legend-text">${asset}: ${(weight * 100).toFixed(1)}%</div>
+                </div>
+            `).join('');
+        }
+        
+        // Generate portfolio cards when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('portfolioCards');
+            
+            samplePortfolios.forEach(portfolio => {
+                const card = createPortfolioCard(portfolio);
+                container.appendChild(card);
+            });
+        });
+    </script>
+</body>
+</html>

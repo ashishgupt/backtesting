@@ -14,13 +14,13 @@ def final_system_demo():
     print("🎯 Demonstrating Production-Ready AI-Powered Portfolio System")
     print()
     
-    base_url = "http://127.0.0.1:8006"
+    base_url = "http://127.0.0.1:8007"
     
     # 1. System Architecture Overview
     print("1️⃣  SYSTEM ARCHITECTURE")
     print("-" * 30)
-    print("🌐 Web UI:     http://localhost:8006/chat")
-    print("📊 API Docs:   http://localhost:8006/docs") 
+    print("🌐 Web UI:     http://localhost:8007/chat")
+    print("📊 API Docs:   http://localhost:8007/docs") 
     print("⚡ FastAPI:    Python + SQLAlchemy + PostgreSQL")
     print("🤖 Claude:     Natural language portfolio advisor")
     print("🐳 Docker:     Production-ready containerization")
@@ -226,8 +226,8 @@ def final_system_demo():
     print("Phase 5 ✅: Production deployment with Docker and security")
     print()
     print("🚀 READY FOR PRODUCTION!")
-    print("📊 Visit http://localhost:8006/chat to try the AI portfolio advisor")
-    print("📖 API documentation available at http://localhost:8006/docs")
+    print("📊 Visit http://localhost:8007/chat to try the AI portfolio advisor")
+    print("📖 API documentation available at http://localhost:8007/docs")
     print("🐳 Deploy with: docker-compose up -d")
     print()
     print("🎊 The AI-powered portfolio backtesting system is complete and operational!")

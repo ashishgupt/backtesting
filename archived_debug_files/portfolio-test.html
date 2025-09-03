@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Analysis Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4f46e5;
+        }
+        .metric-label {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+        button {
+            background: #4f46e5;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        button:hover {
+            background: #4338ca;
+        }
+        .loading {
+            background: #f0f9ff;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            color: #0369a1;
+        }
+        .error {
+            background: #fef2f2;
+            padding: 20px;
+            border-radius: 8px;
+            color: #dc2626;
+        }
+        .success {
+            background: #f0fdf4;
+            padding: 20px;
+            border-radius: 8px;
+            color: #166534;
+        }
+    </style>
+</head>
+<body>
+    <h1>Portfolio Analysis Test</h1>
+    <p>Simple test page to verify the portfolio analysis API integration.</p>
+    
+    <button onclick="testPortfolioAnalysis()">🧪 Test Portfolio Analysis</button>
+    
+    <div id="status" style="margin-top: 20px;"></div>
+    
+    <div class="metrics-grid" id="metricsGrid" style="display: none;">
+        <div class="metric-card">
+            <div class="metric-value" id="cagrValue">-</div>
+            <div class="metric-label">10-Year CAGR</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value" id="sharpeValue">-</div>
+            <div class="metric-label">Sharpe Ratio</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value" id="volatilityValue">-</div>
+            <div class="metric-label">Volatility</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value" id="drawdownValue">-</div>
+            <div class="metric-label">Max Drawdown</div>
+        </div>
+    </div>
+    
+    <div id="debugInfo" style="margin-top: 20px; font-family: monospace; font-size: 0.9em; background: #f8f9fa; padding: 15px; border-radius: 8px; display: none;"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8007';
+        
+        const testPortfolio = {
+            VTI: 0.6,
+            VTIAX: 0.3,
+            BND: 0.1,
+            VNQ: 0.0,
+            GLD: 0.0,
+            VWO: 0.0,
+            QQQ: 0.0
+        };
+        
+        async function testPortfolioAnalysis() {
+            const statusDiv = document.getElementById('status');
+            const metricsDiv = document.getElementById('metricsGrid');
+            const debugDiv = document.getElementById('debugInfo');
+            
+            // Show loading
+            statusDiv.innerHTML = '<div class="loading">🔄 Testing portfolio analysis...</div>';
+            metricsDiv.style.display = 'none';
+            debugDiv.style.display = 'none';
+            
+            try {
+                console.log('🧪 Starting portfolio analysis test...');
+                console.log('Test portfolio:', testPortfolio);
+                
+                const payload = {
+                    allocation: {
+                        allocation: testPortfolio
+                    },
+                    start_date: '2015-01-01',
+                    end_date: '2024-12-31'
+                };
+                
+                console.log('📤 Sending payload:', JSON.stringify(payload, null, 2));
+                
+                const response = await fetch(`${API_BASE}/api/backtest/portfolio`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                console.log('📥 Response status:', response.status);
+                console.log('📥 Response ok:', response.ok);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ API Error Response:', errorText);
+                    throw new Error(`API Error: ${response.status} - ${errorText}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ API Response:', data);
+                
+                // Update status
+                statusDiv.innerHTML = '<div class="success">✅ Portfolio analysis successful!</div>';
+                
+                // Handle both response formats
+                const metrics = data.metrics || data.performance_metrics;
+                console.log('📊 Using metrics:', metrics);
+                
+                if (!metrics) {
+                    throw new Error('No metrics found in API response');
+                }
+                
+                // Update metric displays
+                document.getElementById('cagrValue').textContent = `${(metrics.cagr * 100).toFixed(1)}%`;
+                document.getElementById('sharpeValue').textContent = metrics.sharpe_ratio.toFixed(2);
+                document.getElementById('volatilityValue').textContent = `${(metrics.volatility * 100).toFixed(1)}%`;
+                document.getElementById('drawdownValue').textContent = `${(Math.abs(metrics.max_drawdown) * 100).toFixed(1)}%`;
+                
+                // Show metrics
+                metricsDiv.style.display = 'grid';
+                
+                // Show debug info
+                debugDiv.innerHTML = `
+                    <strong>Debug Information:</strong><br>
+                    API Response Keys: ${Object.keys(data).join(', ')}<br>
+                    Metrics Keys: ${Object.keys(metrics).join(', ')}<br>
+                    Raw CAGR: ${metrics.cagr}<br>
+                    Raw Sharpe: ${metrics.sharpe_ratio}<br>
+                    Raw Volatility: ${metrics.volatility}<br>
+                    Raw Max Drawdown: ${metrics.max_drawdown}
+                `;
+                debugDiv.style.display = 'block';
+                
+            } catch (error) {
+                console.error('❌ Portfolio analysis failed:', error);
+                console.error('❌ Error stack:', error.stack);
+                
+                statusDiv.innerHTML = `
+                    <div class="error">
+                        <div style="font-weight: bold;">❌ Test Failed</div>
+                        <div style="margin-top: 8px;">${error.message}</div>
+                        <div style="margin-top: 8px; font-size: 0.9em;">Check browser console for details.</div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Auto-run test on page load for convenience
+        window.addEventListener('load', () => {
+            console.log('Portfolio Analysis Test Page loaded');
+        });
+    </script>
+</body>
+</html>

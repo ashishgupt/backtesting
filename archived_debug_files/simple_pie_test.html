@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Pie Chart Test</title>
+    <script src="/static/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        #myChart {
+            width: 400px !important;
+            height: 400px !important;
+            margin: 0 auto;
+            display: block;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simple Pie Chart Test</h1>
+        <div id="status" class="status">Loading...</div>
+        
+        <canvas id="myChart"></canvas>
+        
+        <div style="margin-top: 20px;">
+            <h3>Portfolio Allocation:</h3>
+            <ul>
+                <li>VTI (US Stocks): 40%</li>
+                <li>BND (Bonds): 30%</li>
+                <li>VTIAX (International): 20%</li>
+                <li>VNQ (Real Estate): 10%</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function updateStatus(message, isError = false) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + (isError ? 'error' : 'success');
+        }
+        
+        function createChart() {
+            // Check if Chart.js loaded
+            if (typeof Chart === 'undefined') {
+                updateStatus('❌ Chart.js not loaded', true);
+                return;
+            }
+            
+            updateStatus('✅ Chart.js loaded, creating chart...');
+            
+            const ctx = document.getElementById('myChart').getContext('2d');
+            
+            try {
+                const chart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['VTI', 'BND', 'VTIAX', 'VNQ'],
+                        datasets: [{
+                            data: [40, 30, 20, 10],
+                            backgroundColor: [
+                                '#4f46e5',  // Blue
+                                '#10b981',  // Green  
+                                '#f59e0b',  // Yellow
+                                '#ef4444'   // Red
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.label + ': ' + context.parsed + '%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                updateStatus('✅ Pie chart created successfully!');
+                console.log('Chart created:', chart);
+                
+            } catch (error) {
+                updateStatus('❌ Error creating chart: ' + error.message, true);
+                console.error('Chart creation error:', error);
+            }
+        }
+        
+        // Wait for page to load, then create chart
+        window.addEventListener('load', function() {
+            console.log('Page loaded');
+            console.log('Chart.js available:', typeof Chart !== 'undefined');
+            
+            // Small delay to ensure everything is ready
+            setTimeout(createChart, 100);
+        });
+    </script>
+</body>
+</html>
